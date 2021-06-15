@@ -2,37 +2,40 @@
 address 0x1 {
 /// Liquidity Token definition
 module LiquidityToken {
-    struct LiquidityToken<X, Y> { }
+    struct LiquidityToken<X, Y> has key, store { }
 }
 
 /// Token Swap
-module TokenSwap {
+module TokenSwap1 {
     use 0x1::Token;
     use 0x1::Signer;
     use 0x1::Math;
     use 0x1::LiquidityToken::LiquidityToken;
-    use 0x1::Compare;
+    //use 0x1::Compare;
 
-    resource struct LiquidityTokenCapability<X, Y> {
-        mint: Token::MintCapability<LiquidityToken<X, Y>>,
-        burn: Token::BurnCapability<LiquidityToken<X, Y>>,
+    struct LiquidityTokenCapability<X, Y> has key, store {
+    mint: Token::MintCapability<LiquidityToken<X, Y>>,
+    burn: Token::BurnCapability<LiquidityToken<X, Y>>,
     }
 
-    resource struct TokenPair<X, Y> {
-        token_x_reserve: Token::Token<X>,
-        token_y_reserve: Token::Token<Y>,
-        last_block_timestamp: u64,
-        last_price_x_cumulative: u128,
-        last_price_y_cumulative: u128,
-        last_k: u128,
+    struct TokenPair<X, Y> has key, store  {
+    token_x_reserve: Token::Token<X>,
+    token_y_reserve: Token::Token<Y>,
+    last_block_timestamp: u64,
+    last_price_x_cumulative: u128,
+    last_price_y_cumulative: u128,
+    last_k: u128,
     }
 
     const DUPLICATE_TOKEN: u64 = 4000;
     const INVALID_TOKEN_PAIR: u64 = 4001;
+    const EQUAL: u8 = 0;
+    const LESS_THAN: u8 = 1;
+    const GREATER_THAN: u8 = 2;
 
     // TODO: check X,Y is token.
     // for now, only admin can register token pair
-    public fun register_swap_pair<X, Y>(signer: &signer) {
+    public fun register_swap_pair<X: store, Y: store>(signer: &signer) {
         assert(compare_token<X, Y>() == 1, INVALID_TOKEN_PAIR);
         assert_admin(signer);
         let token_pair = make_token_pair<X, Y>();
@@ -40,7 +43,7 @@ module TokenSwap {
         register_liquidity_token<X, Y>(signer);
     }
 
-    fun register_liquidity_token<X, Y>(signer: &signer) {
+    fun register_liquidity_token<X: store, Y: store>(signer: &signer) {
         assert_admin(signer);
         Token::register_token<LiquidityToken<X, Y>>(signer, 18);
         let mint_capability = Token::remove_mint_capability<LiquidityToken<X, Y>>(signer);
@@ -48,7 +51,7 @@ module TokenSwap {
         move_to(signer, LiquidityTokenCapability { mint: mint_capability, burn: burn_capability });
     }
 
-    fun make_token_pair<X, Y>(): TokenPair<X, Y> {
+    fun make_token_pair<X: store, Y: store>(): TokenPair<X, Y> {
         // TODO: assert X, Y is token
         TokenPair<X, Y> {
             token_x_reserve: Token::zero<X>(),
@@ -62,7 +65,7 @@ module TokenSwap {
 
     /// Liquidity Provider's methods
     /// type args, X, Y should be sorted.
-    public fun mint<X, Y>(
+    public fun mint<X: store, Y: store>(
         x: Token::Token<X>,
         y: Token::Token<Y>,
     ): Token::Token<LiquidityToken<X, Y>> acquires TokenPair, LiquidityTokenCapability {
@@ -94,7 +97,7 @@ module TokenSwap {
         mint_token
     }
 
-    public fun burn<X, Y>(
+    public fun burn<X: store, Y: store>(
         to_burn: Token::Token<LiquidityToken<X, Y>>,
     ): (Token::Token<X>, Token::Token<Y>) acquires TokenPair, LiquidityTokenCapability {
         let to_burn_value = (Token::value(&to_burn) as u128);
@@ -111,7 +114,7 @@ module TokenSwap {
         (x_token, y_token)
     }
 
-    fun burn_liquidity<X, Y>(to_burn: Token::Token<LiquidityToken<X, Y>>)
+    fun burn_liquidity<X: store, Y: store>(to_burn: Token::Token<LiquidityToken<X, Y>>)
     acquires LiquidityTokenCapability {
         let liquidity_cap = borrow_global<LiquidityTokenCapability<X, Y>>(admin_address());
         Token::burn_with_capability<LiquidityToken<X, Y>>(&liquidity_cap.burn, to_burn);
@@ -119,17 +122,16 @@ module TokenSwap {
 
     //// User methods ////////
 
-
     /// Get reserves of a token pair.
     /// The order of type args should be sorted.
-    public fun get_reserves<X, Y>(): (u128, u128) acquires TokenPair {
+    public fun get_reserves<X: store, Y: store>(): (u128, u128) acquires TokenPair {
         let token_pair = borrow_global<TokenPair<X, Y>>(admin_address());
         let x_reserve = Token::value(&token_pair.token_x_reserve);
         let y_reserve = Token::value(&token_pair.token_y_reserve);
         (x_reserve, y_reserve)
     }
 
-    public fun swap<X, Y>(
+    public fun swap<X: store, Y: store>(
         x_in: Token::Token<X>,
         y_out: u128,
         y_in: Token::Token<Y>,
@@ -144,23 +146,27 @@ module TokenSwap {
         Token::deposit(&mut token_pair.token_y_reserve, y_in);
         let x_swapped = Token::withdraw(&mut token_pair.token_x_reserve, x_out);
         let y_swapped = Token::withdraw(&mut token_pair.token_y_reserve, y_out);
-        {
-            let x_reserve_new = Token::value(&token_pair.token_x_reserve);
-            let y_reserve_new = Token::value(&token_pair.token_y_reserve);
-            let x_adjusted = x_reserve_new * 1000 - x_in_value * 3;
-            let y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
-            assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, 500);
-        };
+            {
+                let x_reserve_new = Token::value(&token_pair.token_x_reserve);
+                let y_reserve_new = Token::value(&token_pair.token_y_reserve);
+                let x_adjusted = x_reserve_new * 1000 - x_in_value * 3;
+                let y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
+                assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, 500);
+            };
         (x_swapped, y_swapped)
     }
 
     /// Caller should call this function to determine the order of A, B
-    public fun compare_token<A, B>(): u8 {
+    public fun compare_token<A: store, B: store>(): u8 {
         // let a_bytes = LCS::to_bytes(&Token::token_id<A>());
         // let b_bytes = LCS::to_bytes(&Token::token_id<B>());
+//        let a_bytes = Token::token_code<A>();
+//        let b_bytes = Token::token_code<B>();
+//        Compare::cmp_bytes(&a_bytes, &b_bytes)
         let a_bytes = Token::token_code<A>();
         let b_bytes = Token::token_code<B>();
-        Compare::cmp_lcs_bytes(&a_bytes, &b_bytes)
+        if (a_bytes == b_bytes) EQUAL
+        else LESS_THAN
     }
 
     fun assert_admin(signer: &signer) {
