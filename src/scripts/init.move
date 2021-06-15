@@ -2,23 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
 
-// register a token pair STC/Token1
-//! new-transaction
-//! sender: admin
-address 0x1 {
-module Token1 {
-    struct Token1 {}
-}
-}
 
 script {
-    use 0x1::TokenSwap;
-    use 0x1::Token1;
-    use 0x1::Token;
-    use 0x1::STC;
 
-    fun main(signer: &signer) {
-        Token::register_token<Token1::Token1>(signer, 3);
-        TokenSwap::register_swap_pair<STC::STC, Token1::Token1>(signer);
+    use 0x1::Signer;
+
+    fun init(account: signer) {
+        assert(Signer::address_of(&account) == 0x1, 8000);
     }
 }

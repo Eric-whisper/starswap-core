@@ -6,7 +6,7 @@ module LiquidityToken {
 }
 
 /// Token Swap
-module TokenSwap1 {
+module TokenSwap {
     use 0x1::Token;
     use 0x1::Signer;
     use 0x1::Math;
