@@ -103,35 +103,35 @@ module TokenSwapGateway {
             }
         }
     }
-//
-//    public fun remove_liquidity<X: store, Y: store>(
-//        signer: &signer,
-//        liquidity: u128,
-//        amount_x_min: u128,
-//        amount_y_min: u128,
-//    ) {
-//        let order = TokenSwap::compare_token<X, Y>();
-//        assert(order != 0, INVALID_TOKEN_PAIR);
-//        if (order == 1) {
-//            _remove_liquidity<X, Y>(signer, liquidity, amount_x_min, amount_y_min);
-//        } else {
-//            _remove_liquidity<Y, X>(signer, liquidity, amount_y_min, amount_x_min);
-//        }
-//    }
-//
-//    fun _remove_liquidity<X, Y>(
-//        signer: &signer,
-//        liquidity: u128,
-//        amount_x_min: u128,
-//        amount_y_min: u128,
-//    ) {
-//        let liquidity_token = Account::withdraw<LiquidityToken<X, Y>>(signer, liquidity);
-//        let (token_x, token_y) = TokenSwap::burn(liquidity_token);
-//        assert(Token::value(&token_x) >= amount_x_min, 1000);
-//        assert(Token::value(&token_y) >= amount_y_min, 1000);
-//        Account::deposit(Signer::address_of(signer), token_x);
-//        Account::deposit(Signer::address_of(signer), token_y);
-//    }
+
+    public fun remove_liquidity<X: store, Y: store>(
+        signer: &signer,
+        liquidity: u128,
+        amount_x_min: u128,
+        amount_y_min: u128,
+    ) {
+        let order = TokenSwap::compare_token<X, Y>();
+        assert(order != 0, INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            intra_remove_liquidity<X, Y>(signer, liquidity, amount_x_min, amount_y_min);
+        } else {
+            intra_remove_liquidity<Y, X>(signer, liquidity, amount_y_min, amount_x_min);
+        }
+    }
+
+    fun intra_remove_liquidity<X: store, Y: store>(
+        signer: &signer,
+        liquidity: u128,
+        amount_x_min: u128,
+        amount_y_min: u128,
+    ) {
+        let liquidity_token = Account::withdraw<LiquidityToken<X, Y>>(signer, liquidity);
+        let (token_x, token_y) = TokenSwap::burn(liquidity_token);
+        assert(Token::value(&token_x) >= amount_x_min, 1000);
+        assert(Token::value(&token_y) >= amount_y_min, 1000);
+        Account::deposit(Signer::address_of(signer), token_x);
+        Account::deposit(Signer::address_of(signer), token_y);
+    }
 
     public fun swap_exact_token_for_token<X: store, Y: store>(
         signer: &signer,
