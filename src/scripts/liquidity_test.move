@@ -1,11 +1,6 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
-//address 0x1 {
-//module MockETH {
-//    struct MockETH has store {}
-//}
-//}
 
 //! new-transaction
 //! sender: liquidier

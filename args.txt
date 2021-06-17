@@ -4,4 +4,3 @@
 # '#' is a comment.
 
 # run src/scripts/init.move --signers 0x1
-

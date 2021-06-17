@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
 address 0x1 {
+
+module MockETH {
+    struct MockETH has store {}
+}
+
 module TokenMock {
     use 0x1::Token;
     use 0x1::Account;
