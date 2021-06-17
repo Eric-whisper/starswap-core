@@ -5,34 +5,44 @@
 //! new-transaction
 //! sender: liquidier
 script {
-    use 0x1::STC;
-    use 0x1::MockETH;
+    use 0x1::TokenMock::{BTC, ETH};
     use 0x1::TokenSwap;
     use 0x1::LiquidityToken::LiquidityToken;
     use 0x1::Account;
-    use 0x1::TokenMock;
     use 0x1::Token;
+    use 0x1::Signer;
 
-    fun main(account: signer) {
-        // STC/MockETH = 1:10
-        let stc_amount = 1000000;
-        let mocketh_amount = 10000000;
+    fun main(a: signer) {
+        let genesis_account = Account::create_genesis_account(Signer::address_of(&a));
 
-        let token_eth = TokenMock::mint_token<MockETH::MockETH>(&account, mocketh_amount);
-        let token_stc = TokenMock::mint_token<STC::STC>(&account, stc_amount * 10);
+        // BTC/ETH = 1:10
+        let btc_amount = 1000000;
+        let eth_amount = 10000000;
 
-        Account::do_accept_token<LiquidityToken<STC::STC, 0x1::MockETH::MockETH>>(&account);
+        // Resister and mint BTC
+        Token::register_token<BTC>(&genesis_account, 3);
+        Account::do_accept_token<BTC>(&genesis_account);
+        let stc_token = Token::mint<BTC>(&genesis_account, btc_amount);
+        Account::deposit_to_self(&genesis_account, stc_token);
 
-        let stc = Account::withdraw<STC::STC>(&account, stc_amount);
-        let mocketh = Account::withdraw<0x1::MockETH::MockETH>(&account, mocketh_amount);
-        let liquidity_token = TokenSwap::mint<STC::STC, 0x1::MockETH::MockETH>(stc, mocketh);
-        Account::deposit_to_self(&account, liquidity_token);
+        // Register and mint ETH
+        Token::register_token<ETH>(&genesis_account, 3);
+        Account::do_accept_token<ETH>(&genesis_account);
+        let eth_token = Token::mint<ETH>(&genesis_account, eth_amount);
+        Account::deposit_to_self(&genesis_account, eth_token);
 
-        let (x, y) = TokenSwap::get_reserves<STC::STC, MockETH::MockETH>();
-        assert(x == stc_amount, 111);
-        assert(y == mocketh_amount, 112);
+        // liquidity mint
+        TokenSwap::register_swap_pair<BTC, ETH>(&genesis_account);
+        let btc = Account::withdraw<BTC>(&genesis_account, btc_amount);
+        let eth = Account::withdraw<ETH>(&genesis_account, eth_amount);
+        Account::do_accept_token<LiquidityToken<BTC, ETH>>(&genesis_account);
+        let liquidity_token = TokenSwap::mint<BTC, ETH>(btc, eth);
+        Account::deposit_to_self(&genesis_account, liquidity_token);
 
-        Token::burn<MockETH::MockETH>(&account, token_eth);
-        Token::burn<STC::STC>(&account, token_stc);
+        let (x, y) = TokenSwap::get_reserves<BTC, ETH>();
+        assert(x == btc_amount, 111);
+        assert(y == eth_amount, 112);
+
+        Account::release_genesis_signer(genesis_account);
     }
 }

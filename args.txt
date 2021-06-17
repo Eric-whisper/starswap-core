@@ -3,4 +3,7 @@
 # `<command2> <args2>`
 # '#' is a comment.
 
-# run src/scripts/init.move --signers 0x1
+clean
+publish
+check
+run src/scripts/init.move --signers 0x1

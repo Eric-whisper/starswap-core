@@ -2,29 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
 
-//address 0x1 {
-//module Token1 {
-//    struct Token1 has store {}
-//}
-//}
 
 script {
+    use 0x1::Account;
+    use 0x1::Token;
     use 0x1::Signer;
-    use 0x1::Debug;
-//    use 0x1::Account;
-//    use 0x1::Token;
+    use 0x1::MyToken::{MyToken, Self};
 
-    fun init(account: signer) {
-        assert(Signer::address_of(&account) == 0x1, 8000);
-        Debug::print(&Signer::address_of(&account));
+    fun main(a: signer) {
+        let new_account = Account::create_genesis_account(Signer::address_of(&a));
+        MyToken::init(&new_account);
+        // Create 'Balance<TokenType>' resource under sender account, and init with zero
 
-//        Token::register_token<Token1::Token1>(
-//            signer,
-//            1000000, // scaling_factor = 10^6
-//            1000,    // fractional_part = 10^3
-//        );
-//        let token = Token::mint<0x1::Token1::Token1>(&signer, 10000 * 10000 * 2);
-//        Account::deposit(&signer, token);
-//        assert(Account::balance<0x1::Token1::Token1>({0x1}) == 10000 * 10000 * 2, 42);
+        let market_cap = Token::market_cap<MyToken>();
+        assert(market_cap == 0, 8001);
+        assert(Token::is_registered_in<MyToken>(Signer::address_of(&new_account)), 8002);
+
+        let coin = Token::mint<MyToken>(&new_account, 1000000);
+        Account::deposit_to_self<MyToken>(&new_account, coin);
+
+        Account::release_genesis_signer(new_account);
     }
 }
