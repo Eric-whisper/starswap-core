@@ -22,3 +22,20 @@ script {
         TokenSwapGateway::get_reserves<X, Y>();
     }
 }
+
+script {
+    use 0x1::TokenSwapGateway;
+
+    fun add_liquidity<X: store, Y: store>(account: signer,
+                                          amount_x_desired: u128,
+                                          amount_y_desired: u128,
+                                          amount_x_min: u128,
+                                          amount_y_min: u128) {
+        TokenSwapGateway::add_liquidity<X, Y>(
+            &account,
+            amount_x_desired,
+            amount_y_desired,
+            amount_x_min,
+            amount_y_min);
+    }
+}
