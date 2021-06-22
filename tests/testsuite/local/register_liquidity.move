@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
 
-//! new-transaction
-//! sender: liquidier
 script {
     use 0x1::TokenMock::{BTC, ETH};
     use 0x1::TokenSwap;
@@ -12,7 +10,7 @@ script {
     use 0x1::Token;
     use 0x1::Signer;
 
-    fun main(a: signer) {
+    fun register_liquidity(a: signer) {
         let genesis_account = Account::create_genesis_account(Signer::address_of(&a));
 
         // BTC/ETH = 1:10

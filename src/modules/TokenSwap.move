@@ -1,5 +1,6 @@
 // TODO: replace the address with admin address
 address 0x569ab535990a17ac9afd1bc57faec683 {
+// address 0x1 {
 /// Liquidity Token definition
 // module LiquidityToken {
 //     struct LiquidityToken<X, Y> has key, store { }
@@ -11,22 +12,21 @@ module TokenSwap {
     use 0x1::Signer;
     use 0x1::Math;
     // use 0x569ab535990a17ac9afd1bc57faec683::LiquidityToken::LiquidityToken;
-    //use 0x1::Compare;
 
     struct LiquidityToken<X, Y> has key, store { }
 
     struct LiquidityTokenCapability<X, Y> has key, store {
-    mint: Token::MintCapability<LiquidityToken<X, Y>>,
-    burn: Token::BurnCapability<LiquidityToken<X, Y>>,
+        mint: Token::MintCapability<LiquidityToken<X, Y>>,
+        burn: Token::BurnCapability<LiquidityToken<X, Y>>,
     }
 
     struct TokenPair<X, Y> has key, store  {
-    token_x_reserve: Token::Token<X>,
-    token_y_reserve: Token::Token<Y>,
-    last_block_timestamp: u64,
-    last_price_x_cumulative: u128,
-    last_price_y_cumulative: u128,
-    last_k: u128,
+        token_x_reserve: Token::Token<X>,
+        token_y_reserve: Token::Token<Y>,
+        last_block_timestamp: u64,
+        last_price_x_cumulative: u128,
+        last_price_y_cumulative: u128,
+        last_k: u128,
     }
 
     const DUPLICATE_TOKEN: u64 = 4000;

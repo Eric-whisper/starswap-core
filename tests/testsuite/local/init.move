@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
 
-
 script {
     use 0x1::Account;
     use 0x1::Token;

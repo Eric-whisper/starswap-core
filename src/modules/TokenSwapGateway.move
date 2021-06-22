@@ -1,7 +1,6 @@
-address 0x1 {
+address 0x569ab535990a17ac9afd1bc57faec683 {
 module TokenSwapGateway {
-    use 0x1::TokenSwap;
-    use 0x1::LiquidityToken::LiquidityToken;
+    use 0x1::TokenSwap::{LiquidityToken, Self};
     use 0x1::Account;
     use 0x1::Signer;
     use 0x1::Token;
