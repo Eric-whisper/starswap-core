@@ -1,17 +1,19 @@
 // TODO: replace the address with admin address
-address 0x1 {
+address 0x569ab535990a17ac9afd1bc57faec683 {
 /// Liquidity Token definition
-module LiquidityToken {
-    struct LiquidityToken<X, Y> has key, store { }
-}
+// module LiquidityToken {
+//     struct LiquidityToken<X, Y> has key, store { }
+// }
 
 /// Token Swap
 module TokenSwap {
     use 0x1::Token;
     use 0x1::Signer;
     use 0x1::Math;
-    use 0x1::LiquidityToken::LiquidityToken;
+    // use 0x569ab535990a17ac9afd1bc57faec683::LiquidityToken::LiquidityToken;
     //use 0x1::Compare;
+
+    struct LiquidityToken<X, Y> has key, store { }
 
     struct LiquidityTokenCapability<X, Y> has key, store {
     mint: Token::MintCapability<LiquidityToken<X, Y>>,
@@ -174,7 +176,8 @@ module TokenSwap {
     }
 
     fun admin_address(): address {
-        0x1
+        0x569ab535990a17ac9afd1bc57faec683
+        // 0x1
     }
 }
 }
