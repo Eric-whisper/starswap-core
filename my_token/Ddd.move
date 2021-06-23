@@ -1,5 +1,5 @@
 // address 0x2 {
-/// BOT is a test token of Starcoin blockchain.
+/// Ddd is a test token of Starcoin blockchain.
 /// It uses apis defined in the `Token` module.
 module Ddd {
     // use 0x1::Token::{Self, Token};

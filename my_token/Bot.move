@@ -15,7 +15,7 @@ module Bot {
     const PRECISION: u8 = 18;
 
     /// Bot initialization.
-    public fun init(account: signer) {
+    public(script) fun init(account: signer) {
          Token::register_token<Bot>(&account, PRECISION);
          Account::do_accept_token<Bot>(&account);
     }

@@ -30,7 +30,7 @@ module TokenSwapGateway {
         }
     }
 
-    public fun add_liquidity<X: store, Y: store>(
+    public(script) fun add_liquidity<X: store, Y: store>(
         signer: &signer,
         amount_x_desired: u128,
         amount_y_desired: u128,
@@ -103,7 +103,7 @@ module TokenSwapGateway {
         }
     }
 
-    public fun remove_liquidity<X: store, Y: store>(
+    public(script) fun remove_liquidity<X: store, Y: store>(
         signer: &signer,
         liquidity: u128,
         amount_x_min: u128,
@@ -132,7 +132,7 @@ module TokenSwapGateway {
         Account::deposit(Signer::address_of(signer), token_y);
     }
 
-    public fun swap_exact_token_for_token<X: store, Y: store>(
+    public(script) fun swap_exact_token_for_token<X: store, Y: store>(
         signer: &signer,
         amount_x_in: u128,
         amount_y_out_min: u128,
@@ -155,7 +155,7 @@ module TokenSwapGateway {
         Account::deposit(Signer::address_of(signer), token_y_out);
     }
 
-    public fun swap_token_for_exact_token<X: store, Y: store>(
+    public(script) fun swap_token_for_exact_token<X: store, Y: store>(
         signer: &signer,
         amount_x_in_max: u128,
         amount_y_out: u128,
