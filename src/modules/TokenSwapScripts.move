@@ -3,10 +3,10 @@
 // check: EXECUTED
 
 address 0x569ab535990a17ac9afd1bc57faec683 {
-module TokenSwapInterface {
+module TokenSwapScripts {
 
     use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap;
-    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapRouter;
 
     /// register swap for admin user
     public(script) fun register_swap_pair<X :store, Y: store>(account: signer) {

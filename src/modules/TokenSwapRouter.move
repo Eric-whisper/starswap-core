@@ -3,7 +3,7 @@
 // check: EXECUTED
 
 address 0x569ab535990a17ac9afd1bc57faec683 {
-module TokenSwapGateway {
+module TokenSwapRouter {
     use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap::{LiquidityToken, Self};
     use 0x1::Account;
     use 0x1::Signer;
