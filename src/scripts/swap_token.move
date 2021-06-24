@@ -3,7 +3,7 @@
 // check: EXECUTED
 
 script {
-    use 0x1::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
 
     fun swap_token<X: store, Y: store>(account: signer,
                                        amount_x_in: u128,
@@ -16,7 +16,7 @@ script {
 }
 
 script {
-    use 0x1::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
 
     fun quer_reverse<X: store, Y: store>() {
         TokenSwapGateway::get_reserves<X, Y>();
@@ -24,7 +24,7 @@ script {
 }
 
 script {
-    use 0x1::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
 
     fun add_liquidity<X: store, Y: store>(account: signer,
                                           amount_x_desired: u128,

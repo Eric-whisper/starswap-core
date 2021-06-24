@@ -5,8 +5,8 @@
 
 script {
     use 0x1::TokenMock::{BTC, ETH};
-    use 0x1::TokenSwap;
-    use 0x1::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Signer;

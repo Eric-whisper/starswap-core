@@ -30,15 +30,15 @@ module Bot {
         Token::is_same_token<Bot, TokenType>()
     }
 
-    spec fun is_bot {
-    }
+//    spec fun is_bot {
+//    }
 
     /// Return Bot token address.
     public fun token_address(): address {
         Token::token_address<Bot>()
     }
 
-    spec fun token_address {
-    }
+//    spec fun token_address {
+//    }
 }
 }

@@ -1,3 +1,7 @@
+// Copyright (c) The Starcoin Core Contributors
+// SPDX-License-Identifier: Apache-2.0
+// check: EXECUTED
+
 address 0x569ab535990a17ac9afd1bc57faec683 {
 module TokenSwapGateway {
     use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap::{LiquidityToken, Self};
@@ -9,6 +13,19 @@ module TokenSwapGateway {
     const INSUFFICIENT_X_AMOUNT: u64 = 1010;
     const INSUFFICIENT_Y_AMOUNT: u64 = 1011;
     const INVALID_TOKEN_PAIR: u64 = 4001;
+
+    ///
+    /// Register swap pair by comparing sort
+    ///
+    public fun register_swap_pair<X: store, Y: store>(account: &signer) {
+        let order = TokenSwap::compare_token<X, Y>();
+        assert(order != 0, INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwap::register_swap_pair<X, Y>(account)
+        } else {
+            TokenSwap::register_swap_pair<Y, X>(account)
+        }
+    }
 
     public fun liquidity<X: store, Y: store>(account: address): u128 {
         let order = TokenSwap::compare_token<X, Y>();
@@ -30,7 +47,7 @@ module TokenSwapGateway {
         }
     }
 
-    public(script) fun add_liquidity<X: store, Y: store>(
+    public fun add_liquidity<X: store, Y: store>(
         signer: &signer,
         amount_x_desired: u128,
         amount_y_desired: u128,
@@ -73,6 +90,7 @@ module TokenSwapGateway {
         );
         let x_token = Account::withdraw<X>(signer, amount_x);
         let y_token = Account::withdraw<Y>(signer, amount_y);
+
         let liquidity_token = TokenSwap::mint(x_token, y_token);
         if (!Account::is_accepts_token<LiquidityToken<X, Y>>(Signer::address_of(signer))) {
             Account::do_accept_token<LiquidityToken<X, Y>>(signer);
@@ -103,7 +121,7 @@ module TokenSwapGateway {
         }
     }
 
-    public(script) fun remove_liquidity<X: store, Y: store>(
+    public fun remove_liquidity<X: store, Y: store>(
         signer: &signer,
         liquidity: u128,
         amount_x_min: u128,
@@ -132,7 +150,7 @@ module TokenSwapGateway {
         Account::deposit(Signer::address_of(signer), token_y);
     }
 
-    public(script) fun swap_exact_token_for_token<X: store, Y: store>(
+    public ( script ) fun swap_exact_token_for_token<X: store, Y: store>(
         signer: &signer,
         amount_x_in: u128,
         amount_y_out_min: u128,
@@ -155,7 +173,7 @@ module TokenSwapGateway {
         Account::deposit(Signer::address_of(signer), token_y_out);
     }
 
-    public(script) fun swap_token_for_exact_token<X: store, Y: store>(
+    public fun swap_token_for_exact_token<X: store, Y: store>(
         signer: &signer,
         amount_x_in_max: u128,
         amount_y_out: u128,
@@ -180,6 +198,7 @@ module TokenSwapGateway {
         Account::deposit(Signer::address_of(signer), token_y_out);
     }
 
+
     /// Get reserves of a token pair.
     /// The order of `X`, `Y` doesn't need to be sorted.
     /// And the order of return values are based on the order of type parameters.
@@ -193,6 +212,7 @@ module TokenSwapGateway {
             (x, y)
         }
     }
+
 
     //// Helper functions to help user use TokenSwap ////
 

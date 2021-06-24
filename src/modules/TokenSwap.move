@@ -1,17 +1,13 @@
 // TODO: replace the address with admin address
 address 0x569ab535990a17ac9afd1bc57faec683 {
-// address 0x1 {
-/// Liquidity Token definition
-// module LiquidityToken {
-//     struct LiquidityToken<X, Y> has key, store { }
-// }
 
 /// Token Swap
 module TokenSwap {
     use 0x1::Token;
     use 0x1::Signer;
     use 0x1::Math;
-    // use 0x569ab535990a17ac9afd1bc57faec683::LiquidityToken::LiquidityToken;
+    use 0x1::Compare;
+    use 0x1::BCS;
 
     struct LiquidityToken<X, Y> has key, store { }
 
@@ -31,14 +27,13 @@ module TokenSwap {
 
     const DUPLICATE_TOKEN: u64 = 4000;
     const INVALID_TOKEN_PAIR: u64 = 4001;
-    const EQUAL: u8 = 0;
-    const LESS_THAN: u8 = 1;
-    const GREATER_THAN: u8 = 2;
+
 
     // TODO: check X,Y is token.
     // for now, only admin can register token pair
     public fun register_swap_pair<X: store, Y: store>(signer: &signer) {
-        assert(compare_token<X, Y>() == 1, INVALID_TOKEN_PAIR);
+        let order = compare_token<X, Y>();
+        assert(order != 0, INVALID_TOKEN_PAIR);
         assert_admin(signer);
         let token_pair = make_token_pair<X, Y>();
         move_to(signer, token_pair);
@@ -160,15 +155,10 @@ module TokenSwap {
 
     /// Caller should call this function to determine the order of A, B
     public fun compare_token<A: store, B: store>(): u8 {
-        // let a_bytes = LCS::to_bytes(&Token::token_id<A>());
-        // let b_bytes = LCS::to_bytes(&Token::token_id<B>());
-//        let a_bytes = Token::token_code<A>();
-//        let b_bytes = Token::token_code<B>();
-//        Compare::cmp_bytes(&a_bytes, &b_bytes)
-        let a_bytes = Token::token_code<A>();
-        let b_bytes = Token::token_code<B>();
-        if (a_bytes == b_bytes) EQUAL
-        else LESS_THAN
+        let a_bytes = BCS::to_bytes<Token::TokenCode>(&Token::token_code<A>());
+        let b_bytes = BCS::to_bytes<Token::TokenCode>(&Token::token_code<B>());
+        let ret : u8 = Compare::cmp_bcs_bytes(&a_bytes, &b_bytes);
+        ret
     }
 
     fun assert_admin(signer: &signer) {
@@ -176,7 +166,7 @@ module TokenSwap {
     }
 
     fun admin_address(): address {
-        0x569ab535990a17ac9afd1bc57faec683
+        @0x569ab535990a17ac9afd1bc57faec683
         // 0x1
     }
 }

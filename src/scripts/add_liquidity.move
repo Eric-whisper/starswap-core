@@ -3,7 +3,7 @@
 // check: EXECUTED
 
 script {
-    use 0x1::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
 
     fun do_it<X: store, Y: store>(account: signer,
                                   amount_x_desired: u128,
