@@ -4,8 +4,8 @@
 
 address 0x569ab535990a17ac9afd1bc57faec683 {
 module TokenSwapScripts {
-
-    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap;
+    use 0x1::Signer;
+    use 0x1::Debug;
     use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapRouter;
 
     /// register swap for admin user
@@ -13,7 +13,24 @@ module TokenSwapScripts {
         TokenSwapRouter::register_swap_pair<X, Y>(&account);
     }
 
-    /// add liquidity for user
+    ///
+    /// Query liquidity of user
+    //
+    public(script) fun liquidity<X: store, Y: store>(account: signer) {
+        let liquidity = TokenSwapRouter::liquidity<X, Y>(Signer::address_of(&account));
+        Debug::print<u128>(&liquidity);
+    }
+
+    ///
+    /// Query Total liquidity of global
+    //
+    public(script) fun total_liquidity<X: store, Y: store>() {
+        TokenSwapRouter::total_liquidity<X, Y>();
+    }
+
+    ///
+    /// Add liquidity for user
+    ///
     public(script) fun add_liquidity<X: store, Y: store>(
         signer: signer,
         amount_x_desired: u128,
@@ -24,7 +41,9 @@ module TokenSwapScripts {
             &signer, amount_x_desired, amount_y_desired, amount_x_min, amount_y_min);
     }
 
-    /// remove liquidity for user
+    ///
+    /// Remove liquidity for user
+    ///
     public(script) fun remove_liquidity<X: store, Y: store>(
         signer: signer,
         liquidity: u128,
@@ -35,13 +54,6 @@ module TokenSwapScripts {
             &signer, liquidity, amount_x_min, amount_y_min);
     }
 
-    ///
-    /// test function for compare
-    public(script) fun compare_token<X: store, Y: store>() {
-        assert(TokenSwap::compare_token<X, Y>() == 0 , 10001);
-    }
-
-
     public(script) fun liquidity<X: store, Y: store>(account: address): u128 {
         TokenSwapRouter::liquidity<X,Y>(account)
     }
@@ -50,7 +62,6 @@ module TokenSwapScripts {
         TokenSwapRouter::total_liquidity<X,Y>()
     }
 
-    
     public(script) fun swap_exact_token_for_token<X: store, Y: store>(
         signer: signer,
         amount_x_in: u128,
