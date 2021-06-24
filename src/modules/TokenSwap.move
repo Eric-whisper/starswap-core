@@ -166,7 +166,7 @@ module TokenSwap {
     }
 
     fun admin_address(): address {
-        @0x569ab535990a17ac9afd1bc57faec683
+        0x569ab535990a17ac9afd1bc57faec683
         // 0x1
     }
 }

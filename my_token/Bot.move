@@ -1,4 +1,4 @@
-address 0x569ab535990a17ac9afd1bc57faec683 {
+address 0x4b2b6e26ee6919d6878c05ae2c3572da {
 /// Bot is a test token of Starcoin blockchain.
 /// It uses apis defined in the `Token` module.
 module Bot {
@@ -30,7 +30,7 @@ module Bot {
         Token::is_same_token<Bot, TokenType>()
     }
 
-    spec fun is_bot {
+    spec is_bot {
     }
 
     /// Return Bot token address.
@@ -38,7 +38,7 @@ module Bot {
         Token::token_address<Bot>()
     }
 
-    spec fun token_address {
+    spec token_address {
     }
 }
 }

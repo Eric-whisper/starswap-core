@@ -30,7 +30,7 @@ module Bob {
         Token::is_same_token<Bob, TokenType>()
     }
 
-    spec fun is_bob {
+    spec is_bob {
     }
 
     /// Return Bob token address.
@@ -38,7 +38,7 @@ module Bob {
         Token::token_address<Bob>()
     }
 
-    spec fun token_address {
+    spec token_address {
     }
 }
 // }

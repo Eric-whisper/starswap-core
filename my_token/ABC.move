@@ -30,7 +30,7 @@ module ABC {
         Token::is_same_token<ABC, TokenType>()
     }
 
-    spec fun is_abc {
+    spec is_abc {
     }
 
     /// Return ABC token address.
@@ -38,7 +38,7 @@ module ABC {
         Token::token_address<ABC>()
     }
 
-    spec fun token_address {
+    spec token_address {
     }
 }
 // }

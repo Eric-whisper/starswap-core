@@ -6,7 +6,7 @@
 script {
     use 0x1::TokenMock::{BTC, ETH};
     use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap;
-    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapGateway;
+    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapRouter;
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Signer;
@@ -40,9 +40,9 @@ script {
         let amount_eth_desired: u128 = 100 * presision;
         let amount_btc_min: u128 = 1 * presision;
         let amount_eth_min: u128 = 1 * presision;
-        TokenSwapGateway::add_liquidity<BTC, ETH>(&genesis_account,
+        TokenSwapRouter::add_liquidity<BTC, ETH>(&genesis_account,
             amount_btc_desired, amount_eth_desired, amount_btc_min, amount_eth_min);
-        let total_liquidity: u128 = TokenSwapGateway::total_liquidity<BTC, ETH>();
+        let total_liquidity: u128 = TokenSwapRouter::total_liquidity<BTC, ETH>();
         assert(total_liquidity > amount_btc_min, 10000);
         // Balance verify
         assert(Account::balance<BTC>(Signer::address_of(&genesis_account)) ==
@@ -54,7 +54,7 @@ script {
         // Swap token pair, put A BTC, got 10 eth
         let pledge_btc_amount: u128 = 1 * presision;
         let pledge_eth_amount: u128 = 10 * presision;
-        TokenSwapGateway::swap_exact_token_for_token<BTC, ETH>(
+        TokenSwapRouter::swap_exact_token_for_token<BTC, ETH>(
             &genesis_account, pledge_btc_amount, pledge_btc_amount);
         assert(Account::balance<BTC>(Signer::address_of(&genesis_account)) ==
                 (btc_amount - amount_btc_desired - pledge_btc_amount), 10004);
