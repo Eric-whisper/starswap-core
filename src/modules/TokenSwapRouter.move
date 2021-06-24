@@ -150,7 +150,7 @@ module TokenSwapRouter {
         Account::deposit(Signer::address_of(signer), token_y);
     }
 
-    public ( script ) fun swap_exact_token_for_token<X: store, Y: store>(
+    public fun swap_exact_token_for_token<X: store, Y: store>(
         signer: &signer,
         amount_x_in: u128,
         amount_y_out_min: u128,
