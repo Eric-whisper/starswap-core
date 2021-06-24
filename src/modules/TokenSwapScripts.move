@@ -10,7 +10,7 @@ module TokenSwapScripts {
 
     /// register swap for admin user
     public(script) fun register_swap_pair<X :store, Y: store>(account: signer) {
-        TokenSwapGateway::register_swap_pair<X, Y>(&account);
+        TokenSwapRouter::register_swap_pair<X, Y>(&account);
     }
 
     /// add liquidity for user
@@ -20,7 +20,7 @@ module TokenSwapScripts {
         amount_y_desired: u128,
         amount_x_min: u128,
         amount_y_min: u128) {
-        TokenSwapGateway::add_liquidity<X, Y>(
+        TokenSwapRouter::add_liquidity<X, Y>(
             &signer, amount_x_desired, amount_y_desired, amount_x_min, amount_y_min);
     }
 
@@ -31,7 +31,7 @@ module TokenSwapScripts {
         amount_x_min: u128,
         amount_y_min: u128,
     ) {
-        TokenSwapGateway::remove_liquidity<X, Y>(
+        TokenSwapRouter::remove_liquidity<X, Y>(
             &signer, liquidity, amount_x_min, amount_y_min);
     }
 
