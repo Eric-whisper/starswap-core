@@ -1,4 +1,4 @@
-address 0x569ab535990a17ac9afd1bc57faec683 {
+address 0x07fa08a855753f0ff7292fdcbe871216 {
 /// Ddd is a test token of Starcoin blockchain.
 /// It uses apis defined in the `Token` module.
 module Ddd {

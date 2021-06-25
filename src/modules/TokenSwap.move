@@ -1,5 +1,5 @@
 // TODO: replace the address with admin address
-address 0x569ab535990a17ac9afd1bc57faec683 {
+address 0x07fa08a855753f0ff7292fdcbe871216 {
 
 /// Token Swap
 module TokenSwap {
@@ -25,15 +25,21 @@ module TokenSwap {
         last_k: u128,
     }
 
-    const DUPLICATE_TOKEN: u64 = 4000;
-    const INVALID_TOKEN_PAIR: u64 = 4001;
+    const ERROR_SWAP_INVALID_TOKEN_PAIR: u64 = 2000;
+    const ERROR_SWAP_INVALID_PARAMETER: u64 = 2001;
+    const ERROR_SWAP_TOKEN_INSUFFICIENT: u64 = 2002;
+    const ERROR_SWAP_DUPLICATE_TOKEN: u64 = 2003;
+    const ERROR_SWAP_BURN_CALC_INVALID: u64 = 2004;
+    const ERROR_SWAP_SWAPOUT_CALC_INVALID: u64 = 2005;
+    const ERROR_SWAP_PRIVILEGE_INSUFFICIENT: u64 = 2006;
+    const ERROR_SWAP_ADDLIQUIDITY_INVALID: u64 = 2007;
 
 
     // TODO: check X,Y is token.
     // for now, only admin can register token pair
     public fun register_swap_pair<X: store, Y: store>(signer: &signer) {
         let order = compare_token<X, Y>();
-        assert(order != 0, INVALID_TOKEN_PAIR);
+        assert(order != 0, ERROR_SWAP_INVALID_TOKEN_PAIR);
         assert_admin(signer);
         let token_pair = make_token_pair<X, Y>();
         move_to(signer, token_pair);
@@ -85,7 +91,7 @@ module TokenSwap {
                 y_liquidity
             }
         };
-        assert(liquidity > 0, 100);
+        assert(liquidity > 0, ERROR_SWAP_ADDLIQUIDITY_INVALID);
         let token_pair = borrow_global_mut<TokenPair<X, Y>>(admin_address());
         Token::deposit(&mut token_pair.token_x_reserve, x);
         Token::deposit(&mut token_pair.token_y_reserve, y);
@@ -104,7 +110,7 @@ module TokenSwap {
         let total_supply = Token::market_cap<LiquidityToken<X, Y>>();
         let x = to_burn_value * x_reserve / total_supply;
         let y = to_burn_value * y_reserve / total_supply;
-        assert(x > 0 && y > 0, 101);
+        assert(x > 0 && y > 0, ERROR_SWAP_BURN_CALC_INVALID);
         burn_liquidity(to_burn);
         let x_token = Token::withdraw(&mut token_pair.token_x_reserve, x);
         let y_token = Token::withdraw(&mut token_pair.token_y_reserve, y);
@@ -136,7 +142,7 @@ module TokenSwap {
     ): (Token::Token<X>, Token::Token<Y>) acquires TokenPair {
         let x_in_value = Token::value(&x_in);
         let y_in_value = Token::value(&y_in);
-        assert(x_in_value > 0 || y_in_value > 0, 400);
+        assert(x_in_value > 0 || y_in_value > 0, ERROR_SWAP_TOKEN_INSUFFICIENT);
         let (x_reserve, y_reserve) = get_reserves<X, Y>();
         let token_pair = borrow_global_mut<TokenPair<X, Y>>(admin_address());
         Token::deposit(&mut token_pair.token_x_reserve, x_in);
@@ -148,7 +154,7 @@ module TokenSwap {
                 let y_reserve_new = Token::value(&token_pair.token_y_reserve);
                 let x_adjusted = x_reserve_new * 1000 - x_in_value * 3;
                 let y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
-                assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, 500);
+                assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, ERROR_SWAP_SWAPOUT_CALC_INVALID);
             };
         (x_swapped, y_swapped)
     }
@@ -162,11 +168,11 @@ module TokenSwap {
     }
 
     fun assert_admin(signer: &signer) {
-        assert(Signer::address_of(signer) == admin_address(), 401);
+        assert(Signer::address_of(signer) == admin_address(), ERROR_SWAP_PRIVILEGE_INSUFFICIENT);
     }
 
     fun admin_address(): address {
-        @0x569ab535990a17ac9afd1bc57faec683
+        @0x07fa08a855753f0ff7292fdcbe871216
         // 0x1
     }
 }

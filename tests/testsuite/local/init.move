@@ -8,9 +8,9 @@ script {
     //use 0x1::Signer;
     //use 0x1::MyToken::{MyToken, Self};
     use 0x1::Debug;
-    use 0x569ab535990a17ac9afd1bc57faec683::Bot::Bot;
-    use 0x569ab535990a17ac9afd1bc57faec683::Ddd::Ddd;
-    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwap;
+    use 0x07fa08a855753f0ff7292fdcbe871216::Bot::Bot;
+    use 0x07fa08a855753f0ff7292fdcbe871216::Ddd::Ddd;
+    use 0x07fa08a855753f0ff7292fdcbe871216::TokenSwap;
 
     fun main(_a: signer) {
         let ret = TokenSwap::compare_token<Ddd, Bot>();
