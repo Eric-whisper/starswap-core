@@ -33,11 +33,23 @@ module TokenSwap {
     const ERROR_SWAP_SWAPOUT_CALC_INVALID: u64 = 2005;
     const ERROR_SWAP_PRIVILEGE_INSUFFICIENT: u64 = 2006;
     const ERROR_SWAP_ADDLIQUIDITY_INVALID: u64 = 2007;
+    const ERROR_SWAP_TOKEN_NOT_EXISTS: u64 = 2008;
 
+    ///
+    /// Check if swap pair exists
+    ///
+    public fun swap_pair_exists<X: store, Y: store>() : bool {
+        let order = compare_token<X, Y>();
+        assert(order != 0, ERROR_SWAP_INVALID_TOKEN_PAIR);
+        Token::is_registered_in<LiquidityToken<X, Y>>(admin_address())
+    }
 
-    // TODO: check X,Y is token.
     // for now, only admin can register token pair
     public fun register_swap_pair<X: store, Y: store>(signer: &signer) {
+        // check X,Y is token.
+        //assert_is_token<X>();
+        //assert_is_token<Y>();
+
         let order = compare_token<X, Y>();
         assert(order != 0, ERROR_SWAP_INVALID_TOKEN_PAIR);
         assert_admin(signer);
@@ -55,7 +67,10 @@ module TokenSwap {
     }
 
     fun make_token_pair<X: store, Y: store>(): TokenPair<X, Y> {
-        // TODO: assert X, Y is token
+        // assert X, Y is token
+        //assert_is_token<X>();
+        //assert_is_token<Y>();
+
         TokenPair<X, Y> {
             token_x_reserve: Token::zero<X>(),
             token_y_reserve: Token::zero<Y>(),
@@ -169,6 +184,11 @@ module TokenSwap {
 
     fun assert_admin(signer: &signer) {
         assert(Signer::address_of(signer) == admin_address(), ERROR_SWAP_PRIVILEGE_INSUFFICIENT);
+    }
+
+    public fun assert_is_token<TokenType: store>() : bool {
+        assert(Token::token_address<TokenType>() != @0x0, ERROR_SWAP_TOKEN_NOT_EXISTS);
+        true
     }
 
     fun admin_address(): address {

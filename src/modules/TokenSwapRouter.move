@@ -20,6 +20,19 @@ module TokenSwapRouter {
 
 
     ///
+    /// Check if swap pair exists
+    ///
+    public fun swap_pair_exists<X: store, Y: store>(): bool {
+        let order = TokenSwap::compare_token<X, Y>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwap::swap_pair_exists<X, Y>()
+        } else {
+            TokenSwap::swap_pair_exists<Y, X>()
+        }
+    }
+
+    ///
     /// Register swap pair by comparing sort
     ///
     public fun register_swap_pair<X: store, Y: store>(account: &signer) {
@@ -31,6 +44,7 @@ module TokenSwapRouter {
             TokenSwap::register_swap_pair<Y, X>(account)
         }
     }
+
 
     public fun liquidity<X: store, Y: store>(account: address): u128 {
         let order = TokenSwap::compare_token<X, Y>();
