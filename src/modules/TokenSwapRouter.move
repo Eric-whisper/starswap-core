@@ -96,7 +96,7 @@ module TokenSwapRouter {
         let x_token = Account::withdraw<X>(signer, amount_x);
         let y_token = Account::withdraw<Y>(signer, amount_y);
 
-        let liquidity_token = TokenSwap::mint(x_token, y_token);
+        let liquidity_token = TokenSwap::mint<X, Y>(x_token, y_token);
         if (!Account::is_accepts_token<LiquidityToken<X, Y>>(Signer::address_of(signer))) {
             Account::do_accept_token<LiquidityToken<X, Y>>(signer);
         };
