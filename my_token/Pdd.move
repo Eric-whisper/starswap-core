@@ -1,3 +1,4 @@
+address 0x4b2b6e26ee6919d6878c05ae2c3572da {
 module Pdd {
      use 0x1::Token;
      use 0x1::Account;
@@ -13,4 +14,5 @@ module Pdd {
         let token = Token::mint<Pdd>(&account, amount);
         Account::deposit_to_self<Pdd>(&account, token)
      }
+}
 }

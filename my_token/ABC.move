@@ -1,4 +1,5 @@
 // address 0x2 {
+address 0x4b2b6e26ee6919d6878c05ae2c3572da {
 /// ABC is a test token of Starcoin blockchain.
 /// It uses apis defined in the `Token` module.
 module ABC {
@@ -41,4 +42,4 @@ module ABC {
     spec token_address {
     }
 }
-// }
+}
