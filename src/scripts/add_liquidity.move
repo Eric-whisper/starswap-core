@@ -3,7 +3,7 @@
 // check: EXECUTED
 
 script {
-    use 0x569ab535990a17ac9afd1bc57faec683::TokenSwapRouter;
+    use 0x07fa08a855753f0ff7292fdcbe871216::TokenSwapRouter;
 
     fun do_it<X: store, Y: store>(account: signer,
                                   amount_x_desired: u128,
