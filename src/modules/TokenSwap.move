@@ -8,6 +8,7 @@ module TokenSwap {
     use 0x1::Math;
     use 0x1::Compare;
     use 0x1::BCS;
+    use 0x1::Timestamp;
 
     struct LiquidityToken<X, Y> has key, store { }
 
@@ -88,15 +89,16 @@ module TokenSwap {
         y: Token::Token<Y>,
     ): Token::Token<LiquidityToken<X, Y>> acquires TokenPair, LiquidityTokenCapability {
         let total_supply: u128 = Token::market_cap<LiquidityToken<X, Y>>();
+        let (x_reserve, y_reserve) = get_reserves<X, Y>();
         let x_value = Token::value<X>(&x);
         let y_value = Token::value<Y>(&y);
         let liquidity = if (total_supply == 0) {
             // 1000 is the MINIMUM_LIQUIDITY
             (Math::sqrt((x_value as u128) * (y_value as u128)) as u128) - 1000
         } else {
-            let token_pair = borrow_global<TokenPair<X, Y>>(admin_address());
-            let x_reserve = Token::value(&token_pair.token_x_reserve);
-            let y_reserve = Token::value(&token_pair.token_y_reserve);
+//            let token_pair = borrow_global<TokenPair<X, Y>>(admin_address());
+            // let x_reserve = Token::value(&token_pair.token_x_reserve);
+            // let y_reserve = Token::value(&token_pair.token_y_reserve);
             let x_liquidity = x_value * total_supply / x_reserve;
             let y_liquidity = y_value * total_supply / y_reserve;
             // use smaller one.
@@ -112,6 +114,7 @@ module TokenSwap {
         Token::deposit(&mut token_pair.token_y_reserve, y);
         let liquidity_cap = borrow_global<LiquidityTokenCapability<X, Y>>(admin_address());
         let mint_token = Token::mint_with_capability(&liquidity_cap.mint, liquidity);
+        update_token_pair<X,Y>(x_reserve, y_reserve);
         mint_token
     }
 
@@ -129,6 +132,7 @@ module TokenSwap {
         burn_liquidity(to_burn);
         let x_token = Token::withdraw(&mut token_pair.token_x_reserve, x);
         let y_token = Token::withdraw(&mut token_pair.token_y_reserve, y);
+        update_token_pair<X,Y>(x_reserve, y_reserve);
         (x_token, y_token)
     }
 
@@ -146,6 +150,7 @@ module TokenSwap {
         let token_pair = borrow_global<TokenPair<X, Y>>(admin_address());
         let x_reserve = Token::value(&token_pair.token_x_reserve);
         let y_reserve = Token::value(&token_pair.token_y_reserve);
+//        let last_block_timestamp = token_pair.last_block_timestamp;
         (x_reserve, y_reserve)
     }
 
@@ -171,6 +176,7 @@ module TokenSwap {
                 let y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
                 assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, ERROR_SWAP_SWAPOUT_CALC_INVALID);
             };
+        update_token_pair<X,Y>(x_reserve, y_reserve);
         (x_swapped, y_swapped)
     }
 
@@ -195,5 +201,26 @@ module TokenSwap {
         @0x07fa08a855753f0ff7292fdcbe871216
         // 0x1
     }
+
+    // TWAP price oracle, include update reserves and, on the first call per block, price accumulators
+    fun update_token_pair <X: store, Y: store>(
+        x_reserve: u128,
+        y_reserve: u128,
+    ): () acquires TokenPair{
+        let token_pair = borrow_global_mut<TokenPair<X, Y>>(admin_address());
+        // let x_reserve0 = Token::value(&token_pair.token_x_reserve);
+        // let y_reserve0 = Token::value(&token_pair.token_y_reserve);
+        let last_block_timestamp = token_pair.last_block_timestamp;
+        let block_timestamp = Timestamp::now_seconds();
+        let time_elapsed = (block_timestamp - last_block_timestamp as u128);
+        if (time_elapsed > 0 && x_reserve !=0 && y_reserve != 0){
+            //TODO avoid overflow ?
+            token_pair.last_price_x_cumulative =  token_pair.last_price_x_cumulative + (y_reserve / x_reserve * time_elapsed);
+            token_pair.last_price_y_cumulative =  token_pair.last_price_y_cumulative + (x_reserve / y_reserve * time_elapsed);
+        };
+
+        token_pair.last_block_timestamp = block_timestamp;
+    }
+
 }
 }
