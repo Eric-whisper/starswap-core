@@ -9,12 +9,23 @@ module TokenSwap {
     use 0x1::Compare;
     use 0x1::BCS;
     use 0x1::Timestamp;
+    use 0x1::Event;
 
     struct LiquidityToken<X, Y> has key, store { }
 
     struct LiquidityTokenCapability<X, Y> has key, store {
         mint: Token::MintCapability<LiquidityToken<X, Y>>,
         burn: Token::BurnCapability<LiquidityToken<X, Y>>,
+    }
+
+    /// Event emitted when token added liquidity.
+    struct AddLiquidityEvent has drop, store {
+        /// liquidity value by user X and Y type
+        liquidity: u128,
+        /// token code of X type
+        x_token_code: Token::TokenCode,
+        /// token code of X type
+        y_token_code: Token::TokenCode,
     }
 
     struct TokenPair<X, Y> has key, store  {
@@ -24,6 +35,7 @@ module TokenSwap {
         last_price_x_cumulative: u128,
         last_price_y_cumulative: u128,
         last_k: u128,
+        add_liquidity_event: Event::EventHandle<AddLiquidityEvent>,
     }
 
     const ERROR_SWAP_INVALID_TOKEN_PAIR: u64 = 2000;
@@ -54,7 +66,7 @@ module TokenSwap {
         let order = compare_token<X, Y>();
         assert(order != 0, ERROR_SWAP_INVALID_TOKEN_PAIR);
         assert_admin(signer);
-        let token_pair = make_token_pair<X, Y>();
+        let token_pair = make_token_pair<X, Y>(signer);
         move_to(signer, token_pair);
         register_liquidity_token<X, Y>(signer);
     }
@@ -67,7 +79,7 @@ module TokenSwap {
         move_to(signer, LiquidityTokenCapability { mint: mint_capability, burn: burn_capability });
     }
 
-    fun make_token_pair<X: store, Y: store>(): TokenPair<X, Y> {
+    fun make_token_pair<X: store, Y: store>(signer: &signer): TokenPair<X, Y> {
         // assert X, Y is token
         //assert_is_token<X>();
         //assert_is_token<Y>();
@@ -79,6 +91,7 @@ module TokenSwap {
             last_price_x_cumulative: 0,
             last_price_y_cumulative: 0,
             last_k: 0,
+            add_liquidity_event: Event::new_event_handle<AddLiquidityEvent>(signer),
         }
     }
 
@@ -115,6 +128,15 @@ module TokenSwap {
         let liquidity_cap = borrow_global<LiquidityTokenCapability<X, Y>>(admin_address());
         let mint_token = Token::mint_with_capability(&liquidity_cap.mint, liquidity);
         update_token_pair<X,Y>(x_reserve, y_reserve);
+
+        // emit add liquidity event
+        Event::emit_event(&mut token_pair.add_liquidity_event,
+            AddLiquidityEvent {
+                liquidity,
+                y_token_code: Token::token_code<Y>(),
+                x_token_code: Token::token_code<X>(),
+            });
+
         mint_token
     }
 

@@ -33,7 +33,6 @@ script {
 
         // 3. Register swap pair first
         TokenSwap::register_swap_pair<BTC, ETH>(&genesis_account);
-
         ////////////////////////////////////////////////////////////////////////////////////////////
         // Add liquidity, BTC/ETH = 1:10
         let amount_btc_desired: u128 = 10 * presision;
