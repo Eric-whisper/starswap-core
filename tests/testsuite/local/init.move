@@ -4,7 +4,7 @@
 
 script {
     //use 0x1::Account;
-    use 0x1::Token;
+//    use 0x1::Token;
     //use 0x1::Signer;
     //use 0x1::MyToken::{MyToken, Self};
     use 0x1::Debug;
