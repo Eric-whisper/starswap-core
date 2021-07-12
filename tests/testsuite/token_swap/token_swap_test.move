@@ -241,7 +241,7 @@ fun main(signer: &signer) {
 //! new-transaction
 //! sender: liquidier
 script{
-use {{admin}}::Token1;
+use {{admin}}::Token1
 use 0x1::Account;
 fun main(signer: &signer) {
     Account::accept_token<Token1::Token1>(signer);

@@ -26,6 +26,8 @@ module TokenSwap {
         x_token_code: Token::TokenCode,
         /// token code of X type
         y_token_code: Token::TokenCode,
+        /// signer of add liquidity
+        signer: address,
     }
 
     struct TokenPair<X, Y> has key, store  {
@@ -128,19 +130,22 @@ module TokenSwap {
         let liquidity_cap = borrow_global<LiquidityTokenCapability<X, Y>>(admin_address());
         let mint_token = Token::mint_with_capability(&liquidity_cap.mint, liquidity);
         update_token_pair<X,Y>(x_reserve, y_reserve);
-        // emit add liquidity event
-        emit_liquidity_event<X, Y>(liquidity);
 
         mint_token
     }
 
-    fun emit_liquidity_event<X: store, Y:store>(liquidity: u128):() acquires TokenPair{
+
+    ///
+    /// Emit liquidity event
+    ///
+    public fun emit_liquidity_event<X: store, Y:store>(signer: &signer, liquidity: u128):() acquires TokenPair {
         let token_pair = borrow_global_mut<TokenPair<X, Y>>(admin_address());
         Event::emit_event(&mut token_pair.add_liquidity_event,
             AddLiquidityEvent {
                 liquidity,
                 y_token_code: Token::token_code<Y>(),
                 x_token_code: Token::token_code<X>(),
+                signer: Signer::address_of(signer),
             });
     }
 

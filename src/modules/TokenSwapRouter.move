@@ -17,6 +17,7 @@ module TokenSwapRouter {
     const ERROR_ROUTER_OVERLIMIT_X_DESIRED: u64 = 1005;
     const ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED: u64 = 1006;
     const ERROR_ROUTER_X_IN_OVER_LIMIT_MAX: u64 = 1007;
+    const ERROR_ROUTER_ADD_LIQUIDITY_FAILED: u64 = 1008;
 
 
     ///
@@ -114,6 +115,12 @@ module TokenSwapRouter {
         if (!Account::is_accepts_token<LiquidityToken<X, Y>>(Signer::address_of(signer))) {
             Account::do_accept_token<LiquidityToken<X, Y>>(signer);
         };
+
+        // emit liquidity event
+        let liquidity: u128 = Token::value<LiquidityToken<X, Y>>(&liquidity_token);
+        assert(liquidity > 0, ERROR_ROUTER_ADD_LIQUIDITY_FAILED);
+        TokenSwap::emit_liquidity_event<X, Y>(signer, liquidity);
+
         Account::deposit(Signer::address_of(signer), liquidity_token);
     }
 
