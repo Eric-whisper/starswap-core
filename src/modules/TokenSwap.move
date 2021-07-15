@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: replace the address with admin address
-address 0x07fa08a855753f0ff7292fdcbe871216 {
+address 0xbd7e8be8fae9f60f2f5136433e36a091 {
 
 /// Token Swap
 module TokenSwap {
@@ -233,8 +233,15 @@ module TokenSwap {
     }
 
     fun admin_address(): address {
-        @0x07fa08a855753f0ff7292fdcbe871216
+        @0xbd7e8be8fae9f60f2f5136433e36a091
         // 0x1
+    }
+
+    ///
+    /// check liquidity token pair exists
+    ///
+    public fun liquidity_exists_at<X: store, Y: store>(account: address): bool {
+        Token::is_registered_in<LiquidityToken<X, Y>>(account)
     }
 
     // TWAP price oracle, include update reserves and, on the first call per block, price accumulators

@@ -4,9 +4,9 @@
 
 
 script {
-    use 0x07fa08a855753f0ff7292fdcbe871216::TokenMock::{BTC, ETH};
-    use 0x07fa08a855753f0ff7292fdcbe871216::TokenSwap;
-    use 0x07fa08a855753f0ff7292fdcbe871216::TokenSwapRouter;
+    use 0xbd7e8be8fae9f60f2f5136433e36a091::TokenMock::{BTC, ETH};
+    use 0xbd7e8be8fae9f60f2f5136433e36a091::TokenSwap;
+    use 0xbd7e8be8fae9f60f2f5136433e36a091::TokenSwapRouter;
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Signer;

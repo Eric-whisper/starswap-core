@@ -1,9 +1,9 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-address 0x07fa08a855753f0ff7292fdcbe871216 {
+address 0xbd7e8be8fae9f60f2f5136433e36a091 {
 module TokenSwapRouter {
-    use 0x07fa08a855753f0ff7292fdcbe871216::TokenSwap::{LiquidityToken, Self};
+    use 0xbd7e8be8fae9f60f2f5136433e36a091::TokenSwap::{LiquidityToken, Self};
     use 0x1::Account;
     use 0x1::Signer;
     use 0x1::Token;
@@ -17,6 +17,7 @@ module TokenSwapRouter {
     const ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED: u64 = 1006;
     const ERROR_ROUTER_X_IN_OVER_LIMIT_MAX: u64 = 1007;
     const ERROR_ROUTER_ADD_LIQUIDITY_FAILED: u64 = 1008;
+    const ERROR_ROUTER_RESOURCE_NOT_EXISTS: u64 = 1009;
 
 
     ///
@@ -49,6 +50,8 @@ module TokenSwapRouter {
     public fun liquidity<X: store, Y: store>(account: address): u128 {
         let order = TokenSwap::compare_token<X, Y>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        assert(TokenSwap::liquidity_exists_at<X, Y>(account), ERROR_ROUTER_RESOURCE_NOT_EXISTS);
+
         if (order == 1) {
             Account::balance<LiquidityToken<X, Y>>(account)
         } else {

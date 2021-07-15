@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // check: EXECUTED
 
-address 0x07fa08a855753f0ff7292fdcbe871216 {
+address 0xbd7e8be8fae9f60f2f5136433e36a091 {
 
 module TokenMock {
     /// mock bitcoin
