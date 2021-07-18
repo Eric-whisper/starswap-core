@@ -149,12 +149,16 @@ script {
     use alice::TokenMock;
     use 0x1::Account;
     use 0x1::Signer;
+    use 0x1::Debug;
 
     fun swap_exact_token_for_token(signer: signer) {
         let (stc_reserve, token_reserve) = TokenSwapRouter::get_reserves<STC::STC, TokenMock::Usdx>();
+        Debug::print<u128>(&stc_reserve);
+        Debug::print<u128>(&token_reserve);
         TokenSwapRouter::swap_exact_token_for_token<STC::STC, TokenMock::Usdx>(&signer, 1000, 0);
         let token_balance = Account::balance<TokenMock::Usdx>(Signer::address_of(&signer));
         let expected_token_balance = TokenSwapRouter::get_amount_out(1000, stc_reserve, token_reserve);
+        Debug::print<u128>(&token_balance);
         assert(token_balance == expected_token_balance, (token_balance as u64));
     }
 }
