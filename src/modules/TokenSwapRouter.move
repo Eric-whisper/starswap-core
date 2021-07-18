@@ -1,9 +1,9 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-address 0x07fa08a855753f0ff7292fdcbe871216 {
+address 0x81144d60492982a45ba93fba47cae988 {
 module TokenSwapRouter {
-    use 0x07fa08a855753f0ff7292fdcbe871216::TokenSwap::{LiquidityToken, Self};
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwap::{LiquidityToken, Self};
     use 0x1::Account;
     use 0x1::Signer;
     use 0x1::Token;

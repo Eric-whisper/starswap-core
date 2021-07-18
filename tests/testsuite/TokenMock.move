@@ -1,21 +1,11 @@
-// Copyright (c) The Starcoin Core Contributors
-// SPDX-License-Identifier: Apache-2.0
-// check: EXECUTED
+//! account: alice, 10000000000000 0x1::STC::STC
 
-address 0x07fa08a855753f0ff7292fdcbe871216 {
+//! sender: alice
+address alice = {{alice}};
+module alice::TokenMock {
+    // mock MyToken token
+    struct MyToken has copy, drop, store { }
 
-module TokenMock {
-    /// mock bitcoin
-    struct BTC has store { }
-
-    /// mock etherum token
-    struct ETH has store { }
-
-    /// mock barbecue token
-    struct BBQ has store { }
-
-    /// mock pepper token
-    struct PPT has store { }
-}
-
+    // mock Usdx token
+    struct Usdx has copy, drop, store { }
 }

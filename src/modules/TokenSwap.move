@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: replace the address with admin address
-address 0x07fa08a855753f0ff7292fdcbe871216 {
+address 0x81144d60492982a45ba93fba47cae988 {
 
 /// Token Swap
 module TokenSwap {
@@ -216,10 +216,10 @@ module TokenSwap {
     }
 
     /// Caller should call this function to determine the order of A, B
-    public fun compare_token<A: store, B: store>(): u8 {
-        let a_bytes = BCS::to_bytes<Token::TokenCode>(&Token::token_code<A>());
-        let b_bytes = BCS::to_bytes<Token::TokenCode>(&Token::token_code<B>());
-        let ret : u8 = Compare::cmp_bcs_bytes(&a_bytes, &b_bytes);
+    public fun compare_token<X: store, Y: store>(): u8 {
+        let x_bytes = BCS::to_bytes<Token::TokenCode>(&Token::token_code<X>());
+        let y_bytes = BCS::to_bytes<Token::TokenCode>(&Token::token_code<Y>());
+        let ret : u8 = Compare::cmp_bcs_bytes(&x_bytes, &y_bytes);
         ret
     }
 
@@ -233,7 +233,7 @@ module TokenSwap {
     }
 
     fun admin_address(): address {
-        @0x07fa08a855753f0ff7292fdcbe871216
+        @0x81144d60492982a45ba93fba47cae988
         // 0x1
     }
 
