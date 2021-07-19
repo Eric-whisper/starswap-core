@@ -74,36 +74,6 @@ script {
 }
 // check: EXECUTED
 
-
-////! new-transaction
-////! sender: alice
-//address alice = {{alice}};
-//script {
-//    use alice::TokenMock::{Usdx};
-//    use 0x81144d60492982a45ba93fba47cae988::TokenSwap;
-//    use 0x81144d60492982a45ba93fba47cae988::TokenSwap::LiquidityToken;
-//    use 0x1::Account;
-//    use 0x1::STC::STC;
-////    use 0x1::Math;
-//    fun mint(signer: signer) {
-//        // STC/Usdx = 1:2
-//        let stc_amount = 10000;
-//        let usdx_amount = 20000;
-//
-//        // liquidity register and mint
-//        let stc_token = Account::withdraw<STC>(&signer, stc_amount);
-//        let usdx_token = Account::withdraw<Usdx>(&signer, usdx_amount);
-//        Account::do_accept_token<LiquidityToken<STC, Usdx>>(&signer);
-//        let liquidity_token = TokenSwap::mint<STC, Usdx>(stc_token, usdx_token);
-//        Account::deposit_to_self(&signer, liquidity_token);
-//
-//        let (x, y) = TokenSwap::get_reserves<STC, Usdx>();
-//        assert(x == stc_amount, 111);
-//        assert(y == usdx_amount, 112);
-//    }
-//}
-//// check: EXECUTED
-
 //! new-transaction
 //! sender: alice
 address alice = {{alice}};
