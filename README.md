@@ -8,4 +8,7 @@ The swap move implements of starcoin.
 
 ## Run Tests
 
-`move functional-test`
+```
+move check && move publish
+move functional-test
+```
