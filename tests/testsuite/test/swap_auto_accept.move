@@ -89,9 +89,13 @@ script {
         let (reserve_x, reserve_y) = TokenSwap::get_reserves<STC, Usdx>();
         Debug::print<u128>(&reserve_x);
         Debug::print<u128>(&reserve_y);
-        TokenSwapRouter::swap_exact_token_for_token<STC, Usdx>(&signer, 10, 0);
+        TokenSwapRouter::swap_exact_token_for_token<STC, Usdx>(&signer, 100, 0);
         let balance = Account::balance<Usdx>(Signer::address_of(&signer));
         assert(balance > 0, 10002);
+
+        TokenSwapRouter::swap_token_for_exact_token<STC, Usdx>(&signer, 10000000, 10000);
+        let balance = Account::balance<STC>(Signer::address_of(&signer));
+        assert(balance > 0, 10003);
     }
 }
 

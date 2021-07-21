@@ -35,12 +35,9 @@ module TokenSwapRouter {
     ///
     /// Swap token auto accept
     ///
-    public fun swap_pair_token_auto_accept<X: store, Y: store>(signer: &signer) {
-        if (!Account::is_accepts_token<X>(Signer::address_of(signer))) {
-            Account::do_accept_token<X>(signer);
-        };
-        if (!Account::is_accepts_token<Y>(Signer::address_of(signer))) {
-            Account::do_accept_token<Y>(signer);
+    public fun swap_pair_token_auto_accept<Token: store>(signer: &signer) {
+        if (!Account::is_accepts_token<Token>(Signer::address_of(signer))) {
+            Account::do_accept_token<Token>(signer);
         };
     }
 
@@ -193,7 +190,7 @@ module TokenSwapRouter {
         amount_y_out_min: u128,
     ) {
         // auto accept
-        swap_pair_token_auto_accept<X, Y>(signer);
+        swap_pair_token_auto_accept<Y>(signer);
 
         let order = TokenSwap::compare_token<X, Y>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
@@ -219,7 +216,7 @@ module TokenSwapRouter {
         amount_y_out: u128,
     ) {
         // auto accept
-        swap_pair_token_auto_accept<X, Y>(signer);
+        swap_pair_token_auto_accept<X>(signer);
 
         let order = TokenSwap::compare_token<X, Y>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
