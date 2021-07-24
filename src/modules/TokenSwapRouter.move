@@ -3,10 +3,10 @@
 
 address 0xbd7e8be8fae9f60f2f5136433e36a091 {
 module TokenSwapRouter {
-    use 0xbd7e8be8fae9f60f2f5136433e36a091::TokenSwap::{LiquidityToken, Self};
     use 0x1::Account;
     use 0x1::Signer;
     use 0x1::Token;
+    use 0xbd7e8be8fae9f60f2f5136433e36a091::TokenSwap::{LiquidityToken, Self};
 
     // use 0x1::Debug;
     const ERROR_ROUTER_PARAMETER_INVLID: u64 = 1001;
@@ -44,6 +44,7 @@ module TokenSwapRouter {
         } else {
             TokenSwap::register_swap_pair<Y, X>(account)
         }
+
     }
 
 
