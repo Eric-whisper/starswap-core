@@ -1,9 +1,9 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x1 {
 module TokenSwapScripts {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x1::TokenSwapRouter;
 
     /// register swap for admin user
     public(script) fun register_swap_pair<X :store, Y: store>(account: signer) {

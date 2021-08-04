@@ -4,7 +4,7 @@
 //
 
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x1::TokenSwapRouter;
 
     fun main<X: store, Y: store>(account: signer,
                                  amount_x_desired: u128,

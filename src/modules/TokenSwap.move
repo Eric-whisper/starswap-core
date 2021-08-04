@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: replace the address with admin address
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x1 {
 
 /// Token Swap
 module TokenSwap {
@@ -13,6 +13,7 @@ module TokenSwap {
     use 0x1::BCS;
     use 0x1::Timestamp;
     use 0x1::Event;
+    use 0x1::Account;
 
     struct LiquidityToken<X, Y> has key, store { }
 
@@ -43,6 +44,10 @@ module TokenSwap {
         add_liquidity_event: Event::EventHandle<AddLiquidityEvent>,
     }
 
+    struct AdminSignerCapbility has key {
+        cap: Account::SignerCapability,
+    }
+
     const ERROR_SWAP_INVALID_TOKEN_PAIR: u64 = 2000;
     const ERROR_SWAP_INVALID_PARAMETER: u64 = 2001;
     const ERROR_SWAP_TOKEN_INSUFFICIENT: u64 = 2002;
@@ -63,17 +68,27 @@ module TokenSwap {
     }
 
     // for now, only admin can register token pair
-    public fun register_swap_pair<X: store, Y: store>(signer: &signer) {
+    public fun register_swap_pair<X: store, Y: store>(_signer: &signer) acquires AdminSignerCapbility {
         // check X,Y is token.
         //assert_is_token<X>();
         //assert_is_token<Y>();
 
+        let cap = borrow_global<AdminSignerCapbility>(admin_address());
+        let admin_signer = &Account::create_signer_with_cap(&cap.cap);
+
         let order = compare_token<X, Y>();
         assert(order != 0, ERROR_SWAP_INVALID_TOKEN_PAIR);
-        assert_admin(signer);
-        let token_pair = make_token_pair<X, Y>(signer);
-        move_to(signer, token_pair);
-        register_liquidity_token<X, Y>(signer);
+        assert_admin(admin_signer);
+
+        let token_pair = make_token_pair<X, Y>(admin_signer);
+        move_to(admin_signer, token_pair);
+        register_liquidity_token<X, Y>(admin_signer);
+    }
+
+    public fun initialize(account: &signer) {
+        assert_admin(account);
+        let cap = Account::remove_signer_capability(account);
+        move_to(account, AdminSignerCapbility { cap });
     }
 
     fun register_liquidity_token<X: store, Y: store>(signer: &signer) {
@@ -233,7 +248,7 @@ module TokenSwap {
     }
 
     fun admin_address(): address {
-        @0x81144d60492982a45ba93fba47cae988
+        @0x1
         // 0x1
     }
 
