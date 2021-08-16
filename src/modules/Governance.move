@@ -8,30 +8,41 @@ module Governance {
     use 0x1::Signer;
     use 0x1::Treasury;
     use 0x1::Option;
+    use 0x1::TimeStamp;
 
     const ERR_GOVER_INIT_REPEATE: u64 = 1000;
     const ERR_GOVER_OBJECT_NONE_EXISTS: u64 = 1001;
-
-    /// Global strategy of governance, used modify by DAO
-    struct Strategy<GovTokenT, AssetT> {
-        period: u64,
-        period_release_amount: u128,
-
-        // extra config to here ...
-    }
+    const ERR_GOVER_WITHDRAW_OVERFLOW: u64 = 1002;
 
     /// The object of governance
     /// GovTokenT meaning token of governance
     /// AssetT meaning asset which has been staked in governance
-    struct Governance<GovTokenT, AssetT> {
+    struct Governance<GovTokenT, AssetT> has key, store{
         withdraw_cap: Treasury::WithdrawCapability<GovTokenT>,
-        asset_total : u128, // Total locking value of this global governance
-        withdraw_total: u128, // Total value of released
+        asset_total: u128,
+        market_index: u128,
+        // Total locking value of this global governance
+        withdraw_total: u128,
+        // Global strategy of governance, used modify by DAO, by seconds
+        period: u64,
+        // By seconds
+        last_update_timestamp: u64,
+        period_release_amount: u128,
+        precision: u128,
+    }
+
+    /// Capability to modify parameter such as period and release amount
+    struct ParameterModifyCapability<GovTokenT> has key, store {}
+
+    /// Asset wrapper
+    struct AssetWrapper<AssetT> has key {
+        asset : AssetT,
     }
 
     /// To store user's asset token
     struct Stake<AssetT> {
-        asset: Token::Token<AssetT>,
+        asset: Option::Option<AssetT>,
+        asset_weight: u128,
         withdraw_amount: u128,
         last_market_index: u128,
     }
@@ -39,7 +50,10 @@ module Governance {
     /// Called by token issuer
     /// this will declare a governance pool
     public fun initialize<GovTokenT: store, AssetT: store>(account: &signer,
-                                                           treasury: Token::Token<GovTokenT>) {
+                                                           treasury: Token::Token<GovTokenT>,
+                                                           period: u64,
+                                                           period_release_amount: u128,
+                                                           precision: u128) : ParameterModifyCapability {
         assert(!exists_at<GovTokenT, AssetT>(), ERR_GOVER_INIT_REPEATE);
 
         let withdraw_cap = Treasury::intialize<GovTokenT>(account, treasury);
@@ -47,34 +61,73 @@ module Governance {
             withdraw_cap,
             asset_total: 0,
             withdraw_total: 0,
+            market_index: 0,
+            period,
+            last_update_timestamp: TimeStamp::now_seconds(),
+            period_release_amount,
+            precision,
+
         });
+        ParameterModifyCapability {}
     }
 
-    /// Call by stake user, staking amount of asset in order to get governance token.
-    public fun stake<GovTokenT: store, AssetT : store>(account: &signer, asset: Token::Token<AssetT>)
-    acquires Governance, Stake {
+    spec initialize {
+        aborts_if !exists_at<GovTokenT, AssetT>();
+    }
+
+    public fun modify_parameter<GovTokenT>(_cap: &ParameterModifyCapability,
+                                           period: u64,
+                                           period_release_amount: u128) acquires Governance {
+        let token_issuer = Token::token_address<GovTokenT>();
+        let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
+        gov.period = period;
+        gov.period_release_amount = period_release_amount;
+    }
+
+    /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
+    public fun borrow_assets<AssetT: store>(account: &signer,
+                                            asset_weight: u128): AssetWrapper<AssetT> acquires Stake<AssetT> {
+        let stake = borrow_global_mut<Stake<AssetT>>(account);
+        let asset = Option::extract(stake.asset);
+        AssetWrapper<AssetT> { asset: Option::extract(&mut stake.asset) }
+    }
+
+    /// Call by stake user, staking amount of asset in order to get governance token
+    public fun stake<GovTokenT: store, AssetT : store>(account: &signer,
+                                                       asset_wrapper: AssetWrapper<AssetT>,
+                                                       asset_weight: u128) acquires Governance, Stake {
+
         let token_issuer = Token::token_address<GovTokenT>();
         assert(exists<Governance<GovTokenT>>(token_issuer), ERR_GOVER_OBJECT_NONE_EXISTS);
 
+        let AssetWrapper<AssetT> { asset : asset } = asset_wrapper;
+
         let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
-        let asset_amount = Token::value_of<AssetT>(asset);
-        gov.asset_total = gov.asset_total + asset_amount;
+        gov.asset_total = gov.asset_total + asset_weight;
+
+        // calculate market index
+        let time_period = (Timestamp::now_seconds() - gov.last_update_timestamp) / gov.period;
+        gov.market_index = gov.market_index + (gov.period_release_amount * (gov.period) / gov.asset_total);
 
         if (exists<Stake<AssetT>>(Signer::address_of(account))) {
             let stake = borrow_global_mut<Stake<AssetT>>(account);
-            Token::deposit(&mut stake.asset, asset);
+            stake.last_market_index = gov.market_index;
+            stake.asset_weight = asset_weight;
+            Option::fill(&mut stake.asset, asset);
         } else {
             move_to(account, Stake<AssetT> {
-                asset,
+                asset: Option::some(asset_wrapper.asset),
+                asset_weight,
                 withdraw_amount: 0,
-                last_market_index: gov.asset_total
+                last_market_index: gov.market_index,
             });
         };
     }
 
     /// unstake asset from stake pool
-    public fun unstake<GovTokenT: store, AssetT : store>(account: &signer)
-    acquires Governance, Stake {
+    public fun unstake<GovTokenT: store, AssetT : store>(account: &signer,
+                                                         asset_wrapper: AssetWrapper<AssetT>,
+                                                         asset_weight: u128) acquires Governance, Stake {
         // Get back asset, and destroy Stake object
         let stake = move_from<Stake<AssetT>>(account);
         let asset_amount = Token::value_of(stake.asset);
@@ -86,8 +139,20 @@ module Governance {
     }
 
     /// Withdraw governance token from stake
-    public fun withdraw<GovTokenT: store, AssetT : store>(account: &signer) {
-        // TODO(BobOng): TO Calculate withdraw amount
+    public fun withdraw<GovTokenT: store, AssetT : store>(account: &signer,
+                                                          amount: u128) acquires Governance, Stake {
+        let token_issuer = Token::token_address<GovTokenT>();
+        let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
+        let stake = borrow_global_mut<Stake<AssetT>>(account);
+
+        // calculate withdraw amount
+        let total_amount = stake.asset_weight * (stake.last_market_index - gov.market_index);
+        assert(amount + stake.withdraw_amount <= total_amount, ERR_GOVER_WITHDRAW_OVERFLOW);
+
+        Treasury::withdraw_with_capability(gov.withdraw_cap, amount);
+
+        gov.withdraw_total = gov.withdraw_total + amount;
+        stake.withdraw_amount = stake.withdraw_amount + amount;
     }
 
     /// Check the Governance of TokenT is exists.
@@ -97,59 +162,3 @@ module Governance {
         exists<Governance<GovTokenT>>(token_issuer)
     }
 }
-    //      // 管理员检查
-//      TokenSwapGovConfig::assert_admin();
-//      assert(!exists<FrozenPool>(Signer::address_of(account))), 10002);
-//      // 初始化代币并mint对应的代币额度
-//      GOV::init(account, amount);
-//
-//        // 将质押部分的代币取出存入到当前合约
-//      let frozen_amount = amount * 18044 / 1000000;
-//      let reserve = Account::withdraw<GOV::GOV>(account);
-//      move_to(account, FrozenPool { reserve });
-//    }
-
-    /// 普通用户质押
-//    public fun stake<X, Y>(account: &signer, amount: u128) {
-//    // 将当前liquidity质押在当前合约下
-//    let cur_block_num = Block::get_current_block_number();
-//    let liquidity_token = TokenSwap::withdraw_liquidity_token<X, Y>(signer, amount);
-//    move_to(account, Stake<X, Y>{
-//        liquidity_token,
-//        stake_block_num : cur_block_num,
-//        cur_block_num : cur_block_num,
-//        0,
-//    });
-//  }
-
-    /// 退回质押
-//  public fun unstake<X, Y>(account: &signer, amount: u128) {
-//      let stake = borrow_global_mut<Stake<X, Y>>(account);
-//      let gov_amount = 0; // TODO 计算治理币对应的LPLiquidityToken额度
-//      let gov_token = Account::withdraw<GOV::GOV>(&account, gov_amount);
-//
-//      // 治理币还回给冻结池
-//      let frozen_pool = borrow_global_mut<FrozenPool>(TokenSwapGovConfig::admin_address());
-//      Token::deposit<GOV::GOV>(frozen_pool.reserve, gov_token);
-//
-//      // 将 LP token 从权证中还回到Swap池中
-//      TokenSwap::pay_back_liquidity_token<X, Y>(account, stake.liquidity_token, amount);
-//    }
-
-    /// Get rewards with stake
-//  public fun withdraw_rewards<X: store, Y: store>(account: &signer) {
-//    let stake = borrow_global_mut<Stake<X, Y>>(account);
-//    let curr_block_num = Block::get_current_block_number();
-//    assert(current_block_num > stake.last_block_num, 10000);
-//
-//    // 按照配置取对应额度的治理币下发给用户
-//    let diff_block_num = curr_block_num - stake.last_block_num;
-//    let block_amount = TokenSwapGovConfig::get_block_amount<X, Y>();
-//    let frozen_pool = borrow_global_mut<FrozenPool>(TokenSwapGovConfig::admin_address());
-//    let gov = Token::withdraw(&mut frozen_pool.reserve, diff_block_num * block_amount);
-//    Account::deposit<GOV::GOV>(Signer::address_of(account), gov);
-//
-//    // 更新权证
-//    stake.last_block_num = curr_block_num;
-//  }
-// }
