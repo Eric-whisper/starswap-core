@@ -40,7 +40,7 @@ module Governance {
     }
 
     /// To store user's asset token
-    struct Stake<AssetT> {
+    struct Stake<AssetT> has key, store {
         asset: Option::Option<AssetT>,
         asset_weight: u128,
         withdraw_amount: u128,
@@ -85,9 +85,8 @@ module Governance {
     }
 
     /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
-    public fun borrow_assets<AssetT: store>(account: &signer,
-                                            asset_weight: u128): AssetWrapper<AssetT> acquires Stake<AssetT> {
-        let stake = borrow_global_mut<Stake<AssetT>>(account);
+    public fun borrow_assets<AssetT: store>(account: &signer): AssetWrapper<AssetT> acquires Stake<AssetT> {
+        let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
         let asset = Option::extract(stake.asset);
         AssetWrapper<AssetT> { asset: Option::extract(&mut stake.asset) }
     }
@@ -110,7 +109,7 @@ module Governance {
         gov.market_index = gov.market_index + (gov.period_release_amount * (gov.period) / gov.asset_total);
 
         if (exists<Stake<AssetT>>(Signer::address_of(account))) {
-            let stake = borrow_global_mut<Stake<AssetT>>(account);
+            let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
             stake.last_market_index = gov.market_index;
             stake.asset_weight = asset_weight;
             Option::fill(&mut stake.asset, asset);
@@ -129,7 +128,7 @@ module Governance {
                                                          asset_wrapper: AssetWrapper<AssetT>,
                                                          asset_weight: u128) acquires Governance, Stake {
         // Get back asset, and destroy Stake object
-        let stake = move_from<Stake<AssetT>>(account);
+        let stake = move_from<Stake<AssetT>>(Signer::address_of(account));
         let asset_amount = Token::value_of(stake.asset);
         Account::deposit(account, stake.asset);
 
@@ -143,7 +142,7 @@ module Governance {
                                                           amount: u128) acquires Governance, Stake {
         let token_issuer = Token::token_address<GovTokenT>();
         let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
-        let stake = borrow_global_mut<Stake<AssetT>>(account);
+        let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
 
         // calculate withdraw amount
         let total_amount = stake.asset_weight * (stake.last_market_index - gov.market_index);
@@ -156,8 +155,7 @@ module Governance {
     }
 
     /// Check the Governance of TokenT is exists.
-    public fun exists_at<GovTokenT: store + key + drop
-                         AssetT : store>(): bool {
+    public fun exists_at<GovTokenT: store, AssetT : store>(): bool {
         let token_issuer = Token::token_address<GovTokenT>();
         exists<Governance<GovTokenT>>(token_issuer)
     }
