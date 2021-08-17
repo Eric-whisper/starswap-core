@@ -18,7 +18,7 @@ module Governance {
     /// The object of governance
     /// GovTokenT meaning token of governance
     /// AssetT meaning asset which has been staked in governance
-    struct Governance<GovTokenT, AssetT> has key, store{
+    struct Governance<GovTokenT, AssetT> has key, store {
         withdraw_cap: Treasury::WithdrawCapability<GovTokenT>,
         asset_total_weight: u128,
         market_index: u128,
@@ -37,7 +37,8 @@ module Governance {
 
     /// Asset wrapper
     struct AssetWrapper<AssetT> has key {
-        asset : AssetT,
+        asset: AssetT,
+        asset_weight: u128,
     }
 
     /// To store user's asset token
@@ -54,7 +55,7 @@ module Governance {
                                                            treasury: Token::Token<GovTokenT>,
                                                            period: u64,
                                                            period_release_amount: u128,
-                                                           precision: u128) : ParameterModifyCapability {
+                                                           precision: u128): ParameterModifyCapability {
         assert(!exists_at<GovTokenT, AssetT>(), ERR_GOVER_INIT_REPEATE);
 
         let withdraw_cap = Treasury::intialize<GovTokenT>(account, treasury);
@@ -67,13 +68,8 @@ module Governance {
             last_update_timestamp: TimeStamp::now_seconds(),
             period_release_amount,
             precision,
-
         });
         ParameterModifyCapability {}
-    }
-
-    spec initialize {
-        aborts_if !exists_at<GovTokenT, AssetT>();
     }
 
     public fun modify_parameter<GovTokenT>(_cap: &ParameterModifyCapability,
@@ -86,17 +82,22 @@ module Governance {
     }
 
     /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
-    public fun borrow_assets<AssetT: store>(account: &signer): AssetWrapper<AssetT> acquires Stake<AssetT> {
+    public fun borrow_assets<AssetT: store>(account: &signer)
+    : AssetWrapper<AssetT> acquires Stake<AssetT> {
         let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
-        let asset = Option::extract(stake.asset);
-        AssetWrapper<AssetT> { asset }
+        let asset = Option::extract(&mut stake.asset);
+        AssetWrapper<AssetT> { asset, asset_weight: stake.asset_weight }
+    }
+
+    /// Build a new asset from outside
+    public fun build_new_asset<AssetT: store>(asset: AssetT, asset_weight: u128) {
+        AssetWrapper<AssetT> { asset, asset_weight }
     }
 
     /// Call by stake user, staking amount of asset in order to get governance token
     public fun stake<GovTokenT: store, AssetT : store>(account: &signer,
-                                                       asset_wrapper: AssetWrapper<AssetT>,
-                                                       asset_weight: u128) acquires Stake {
-        let AssetWrapper<AssetT> { asset } = asset_wrapper;
+                                                       asset_wrapper: AssetWrapper<AssetT>) acquires Stake {
+        let AssetWrapper<AssetT> { asset, asset_weight } = asset_wrapper;
         let new_market_index = update_market_index(asset_weight, 0);
 
         if (exists<Stake<AssetT>>(Signer::address_of(account))) {
@@ -116,10 +117,8 @@ module Governance {
 
     /// Unstake asset from stake pool
     public fun unstake<GovTokenT: store, AssetT : store>(account: &signer,
-                                                         asset_wrapper: AssetWrapper<AssetT>,
-                                                         asset_weight: u128) acquires Stake {
-
-        let AssetWrapper<AssetT> { asset } = asset_wrapper;
+                                                         asset_wrapper: AssetWrapper<AssetT>) acquires Stake {
+        let AssetWrapper<AssetT> { asset, asset_weight } = asset_wrapper;
         let account_addr = Signer::address_of(account);
 
         //  Get back asset, and destroy Stake object
@@ -139,7 +138,7 @@ module Governance {
 
     /// Update index from two parameters
     fun update_market_index<GovTokenT: store>(incre_asset_weight: u128,
-                                              decre_asset_weight: u128) : u128 acquires Governance {
+                                              decre_asset_weight: u128): u128 acquires Governance {
         let token_issuer = Token::token_address<GovTokenT>();
         assert(exists<Governance<GovTokenT>>(token_issuer), ERR_GOVER_OBJECT_NONE_EXISTS);
 
@@ -178,8 +177,9 @@ module Governance {
     }
 
     /// Check the Governance of TokenT is exists.
-    public fun exists_at<GovTokenT: store, AssetT : store>(): bool {
+    public fun exists_at<GovTokenT: store, AssetT: store>(): bool {
         let token_issuer = Token::token_address<GovTokenT>();
         exists<Governance<GovTokenT>>(token_issuer)
     }
+}
 }
