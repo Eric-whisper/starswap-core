@@ -8,7 +8,7 @@ module Governance {
     use 0x1::Signer;
     use 0x1::Treasury;
     use 0x1::Option;
-    use 0x1::TimeStamp;
+    use 0x1::Timestamp;
 
     const ERR_GOVER_INIT_REPEATE: u64 = 1000;
     const ERR_GOVER_OBJECT_NONE_EXISTS: u64 = 1001;
@@ -65,7 +65,7 @@ module Governance {
             withdraw_total: 0,
             market_index: 0,
             period,
-            last_update_timestamp: TimeStamp::now_seconds(),
+            last_update_timestamp: Timestamp::now_seconds(),
             period_release_amount,
             precision,
         });
@@ -102,7 +102,7 @@ module Governance {
 
         if (exists<Stake<AssetT>>(Signer::address_of(account))) {
             let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
-            stake.last_market_index = gov.market_index;
+            stake.last_market_index = new_market_index;
             stake.asset_weight = stake.asset_weight + asset_weight;
             Option::fill(&mut stake.asset, asset);
         } else {
@@ -149,7 +149,8 @@ module Governance {
         gov.asset_total_weight = gov.asset_total_weight - decre_asset_weight;
 
         // calculate market index
-        let time_period = (Timestamp::now_seconds() - gov.last_update_timestamp) / gov.period;
+        let now = Timestamp::now_seconds();
+        let time_period = (now - gov.last_update_timestamp) / gov.period;
         let new_market_index = gov.market_index + (gov.period_release_amount * time_period) / gov.asset_total_weight;
         gov.market_index = new_market_index;
 
