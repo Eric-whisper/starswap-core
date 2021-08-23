@@ -6,13 +6,58 @@ module GovernanceDaoProposal {
 
     use 0x1::Governance;
     use 0x1::Dao;
+    use 0x1::Token;
+    use 0x1::Signer;
+    use 0x1::Errors;
 
-    public fun plugin(account: &signer, cap: Governance::ParameterModifyCapability) {}
+    const ERR_NOT_AUTHORIZED: u64 = 401;
+
+    /// A wrapper of `Governance::ParameterModifyCapability`.
+    struct GovernanceCapability<PoolType, TokenT> has key {
+        cap: Governance::ParameterModifyCapability,
+    }
+
+    struct GovernanceProposalAction<PoolType> has copy, drop, store {
+        period_release_amount: u128,
+    }
+
+    /// Add dao of governance ability
+    public fun plugin<TokenT: store>(account: &signer, cap: Governance::ParameterModifyCapability) {
+        let token_issuer = Token::token_address<TokenT>();
+        assert(Signer::address_of(account) == token_issuer, Errors::requires_address(ERR_NOT_AUTHORIZED));
+
+        move_to(account, GovernanceCapability<TokenT> { cap })
+    }
+
+    spec plugin {
+        pragma aborts_if_is_partial = false;
+        let sender = Signer::address_of(account);
+        aborts_if sender != Token::SPEC_TOKEN_TEST_ADDRESS();
+        aborts_if exists<GovernanceProposalAction<TokenT>>(sender);
+        ensures exists<GovernanceProposalAction<TokenT>>(sender);
+    }
 
     /// Start a proposal while an governance need changing parameter
-    public fun submit_propose() {}
+    public fun submit_proposal<TokenT: copy + drop + store>(account: &signer, period_release_amount: u128, exec_delay: u64) {
+        Dao::propose<TokenT, GovernanceProposalAction>(
+            account,
+            GovernanceProposalAction { period_release_amount },
+            exec_delay,
+        );
+    }
 
     /// Perform propose after propose has completed
-    public fun perform_propose() {}
+    public fun execute_proposal<TokenT: copy + drop + store>(
+        proposer_address: address,
+        proposal_id: u64
+    ) acquires GovernanceCapability {
+        let GovernanceProposalAction { period_release_amount } = Dao::extract_proposal_action<
+            TokenT,
+            GovernanceProposalAction,
+        >(proposer_address, proposal_id);
+
+        let cap = borrow_global<GovernanceCapability<TokenT>>(Token::token_address<TokenT>());
+        Governance::modify_parameter<TokenT>(&cap.cap, period_release_amount);
+    }
 }
 }
