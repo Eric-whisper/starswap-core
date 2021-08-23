@@ -22,10 +22,6 @@ module Governance {
         withdraw_cap: Treasury::WithdrawCapability<GovTokenT>,
         asset_total_weight: u128,
         market_index: u128,
-        // Total locking value of this global governance
-        withdraw_total: u128,
-        // Global strategy of governance, used modify by DAO, by seconds
-        period: u64,
         // By seconds
         last_update_timestamp: u64,
         period_release_amount: u128,
@@ -45,8 +41,8 @@ module Governance {
     struct Stake<AssetT> has key, store {
         asset: Option::Option<AssetT>,
         asset_weight: u128,
-        withdraw_amount: u128,
         last_market_index: u128,
+        gain: u128,
     }
 
     /// Called by token issuer
@@ -62,9 +58,7 @@ module Governance {
         move_to(account, Governance<GovTokenT, AssetT> {
             withdraw_cap,
             asset_total_weight: 0,
-            withdraw_total: 0,
             market_index: 0,
-            period,
             last_update_timestamp: Timestamp::now_seconds(),
             period_release_amount,
             precision,
@@ -96,65 +90,42 @@ module Governance {
 
     /// Call by stake user, staking amount of asset in order to get governance token
     public fun stake<GovTokenT: store, AssetT : store>(account: &signer,
-                                                       asset_wrapper: AssetWrapper<AssetT>) acquires Stake {
+                                                       asset_wrapper: AssetWrapper<AssetT>) acquires Stake, Governance {
         let AssetWrapper<AssetT> { asset, asset_weight } = asset_wrapper;
-        let new_market_index = update_market_index(asset_weight, 0);
+        let token_issuer = Token::token_address<GovTokenT>();
+        let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
 
         if (exists<Stake<AssetT>>(Signer::address_of(account))) {
             let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
-            stake.last_market_index = new_market_index;
+            // perform settlement before add weight
+            settle<GovTokenT, AssetT>(gov, stake);
             stake.asset_weight = stake.asset_weight + asset_weight;
             Option::fill(&mut stake.asset, asset);
         } else {
             move_to(account, Stake<AssetT> {
                 asset: Option::some(asset_wrapper.asset),
                 asset_weight,
-                withdraw_amount: 0,
-                last_market_index: new_market_index,
+                last_market_index: gov.market_index,
+                gain: 0,
             });
         };
     }
 
     /// Unstake asset from stake pool
     public fun unstake<GovTokenT: store, AssetT : store>(account: &signer,
-                                                         asset_wrapper: AssetWrapper<AssetT>) acquires Stake {
+                                                         asset_wrapper: AssetWrapper<AssetT>) acquires Stake, Governance {
         let AssetWrapper<AssetT> { asset, asset_weight } = asset_wrapper;
-        let account_addr = Signer::address_of(account);
 
-        //  Get back asset, and destroy Stake object
-        let stake = borrow_global_mut<Stake<AssetT>>(account_addr);
-        if (stake.asset_weight == asset_weight) {
-            let stake_holder = move_from<Stake<AssetT>>(account_addr);
-            return
-        };
+        // Get back asset, and destroy Stake object
+        let token_issuer = Token::token_address<GovTokenT>();
+        let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
+        let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
 
-        let updated_market_index = update_market_index<GovTokenT>(0, asset_weight);
+        // Perform settlement
+        settle(gov, stake);
 
-        // Update stake parameter
-        stake.last_market_index = updated_market_index;
         stake.asset_weight = stake.asset_weight - asset_weight;
         Option::fill(&mut stake.asset, asset);
-    }
-
-    /// Update index from two parameters
-    fun update_market_index<GovTokenT: store>(incre_asset_weight: u128,
-                                              decre_asset_weight: u128): u128 acquires Governance {
-        let token_issuer = Token::token_address<GovTokenT>();
-        assert(exists<Governance<GovTokenT>>(token_issuer), ERR_GOVER_OBJECT_NONE_EXISTS);
-
-        let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
-        gov.asset_total_weight = gov.asset_total_weight + incre_asset_weight;
-
-        assert((gov.asset_total_weight - decre_asset_weight) > 0, ERR_GOVER_WEIGHT_DECREASE_OVERLIMIT);
-        gov.asset_total_weight = gov.asset_total_weight - decre_asset_weight;
-
-        // calculate market index
-        let now = Timestamp::now_seconds();
-        let time_period = (now - gov.last_update_timestamp) / gov.period;
-        let new_market_index = gov.market_index + (gov.period_release_amount * time_period) / gov.asset_total_weight;
-        gov.market_index = new_market_index;
-
-        new_market_index
     }
 
     /// Withdraw governance token from stake
@@ -163,18 +134,52 @@ module Governance {
         let token_issuer = Token::token_address<GovTokenT>();
         let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
         let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
-
-        // calculate withdraw amount
-        let total_amount = stake.asset_weight * (stake.last_market_index - gov.market_index);
-        assert((amount + stake.withdraw_amount <= total_amount), ERR_GOVER_WITHDRAW_OVERFLOW);
-
+        // Perform settlement
+        settle(gov, stake);
+        assert((stake.gain + amount > 0), ERR_GOVER_WITHDRAW_OVERFLOW);
         // Withdraw goverment token
         Treasury::withdraw_with_capability(gov.withdraw_cap, amount);
+    }
 
+    /// The user can quering all governance amount in any time and scene
+    public fun query_gov_token_amount<GovTokenT: store, AssetT: store>(account: &signer) {
+        let token_issuer = Token::token_address<GovTokenT>();
+        let gov = borrow_global_mut<Governance<GovTokenT>>(token_issuer);
+        let stake = borrow_global_mut<Stake<AssetT>>(Signer::address_of(account));
+        // Perform settlement
+        settle(gov, stake);
+        stake.gain
+    }
+
+    /// Performing a settlement based given governance object and stake object.
+    fun settle<GovTokenT: store, AssetT: store>(gov: &mut Governance<GovTokenT>, stake: &mut Stake<GovTokenT>) {
+        let period_gain = calculate_withdraw_amount(gov.market_index, stake.last_market_index, stake.asset_weight);
         stake.last_market_index = gov.market_index;
+        stake.gain = stake.gain + period_gain;
 
-        gov.withdraw_total = gov.withdraw_total + amount;
-        stake.withdraw_amount = stake.withdraw_amount + amount;
+        let new_market_index = calculate_market_index(
+            gov.market_index, gov.asset_total_weight, gov.last_update_timestamp, gov.period_release_amount);
+        gov.market_index = new_market_index;
+        gov.last_update_timestamp = Timestamp::now_seconds();
+    }
+
+    /// There is calculating from market index and global parameters,
+    /// such as inline function in C language.
+    fun calculate_market_index(market_index: u128,
+                               asset_total_weight: u128,
+                               last_update_timestamp: u128,
+                               period_release_amount: u128): u128 {
+        let now = Timestamp::now_seconds();
+        let time_period = now - last_update_timestamp;
+        let new_market_index = market_index + (period_release_amount * time_period) / asset_total_weight;
+        new_market_index
+    }
+
+    /// This function will return a gain index
+    fun calculate_withdraw_amount(market_index: u128,
+                                  last_market_index: u128,
+                                  asset_weight: u128): u128 {
+        asset_weight * (market_index - last_market_index)
     }
 
     /// Check the Governance of TokenT is exists.
