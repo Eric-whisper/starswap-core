@@ -27,6 +27,7 @@ module Governance {
         market_index: u128,
         // By seconds
         last_update_timestamp: u64,
+        period_release_amount: u128,
     }
 
     /// Capability to modify parameter such as period and release amount
@@ -63,13 +64,14 @@ module Governance {
     // Initialize asset pools
     public fun initialize_asset<
         PoolType: store,
-        AssetT: store>(account: &signer): ParameterModifyCapability {
+        AssetT: store>(account: &signer, period_release_amount: u128): ParameterModifyCapability acquires GovernanceAsset {
         assert(!exists_asset_at<PoolType, AssetT>(), ERR_GOVER_INIT_REPEATE);
 
         move_to(account, GovernanceAsset<PoolType, AssetT> {
             asset_total_weight: 0,
             market_index: 0,
             last_update_timestamp: Timestamp::now_seconds(),
+            period_release_amount,
         });
         ParameterModifyCapability {}
     }
