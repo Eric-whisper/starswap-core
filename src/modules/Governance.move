@@ -51,13 +51,22 @@ module Governance {
     public fun initialize<
         PoolType: store,
         GovTokenT: store>(account: &signer,
-                          treasury: Token::Token<GovTokenT>,
-    ): ParameterModifyCapability {
+                          treasury: Token::Token<GovTokenT>) {
         assert(!exists_at<PoolType, GovTokenT>(), ERR_GOVER_INIT_REPEATE);
 
         let withdraw_cap = GovernanceTreasury::initialize<PoolType, GovTokenT>(account, treasury);
         move_to(account, Governance<PoolType, GovTokenT> {
             withdraw_cap,
+        });
+    }
+
+    // Initialize asset pools
+    public fun initialize_asset<
+        PoolType: store,
+        AssetT: store>(account: &signer): ParameterModifyCapability {
+        assert(!exists_asset_at<PoolType, AssetT>(), ERR_GOVER_INIT_REPEATE);
+
+        move_to(account, GovernanceAsset<PoolType, AssetT> {
             asset_total_weight: 0,
             market_index: 0,
             last_update_timestamp: Timestamp::now_seconds(),
@@ -220,6 +229,12 @@ module Governance {
     public fun exists_at<PoolType: store, GovTokenT: store>(): bool {
         let token_issuer = Token::token_address<GovTokenT>();
         exists<Governance<PoolType, GovTokenT>>(token_issuer)
+    }
+
+    /// Check the Governance of AsssetT is exists.
+    public fun exists_asset_at<PoolType: store, AssetT: store>(): bool {
+        let token_issuer = Token::token_address<AssetT>();
+        exists<GovernanceAsset<PoolType, AssetT>>(token_issuer)
     }
 }
 }
