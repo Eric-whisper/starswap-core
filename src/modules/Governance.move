@@ -96,7 +96,7 @@ module Governance {
     }
 
     /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
-    public fun borrow_assets<PoolType: store,
+    public fun borrow_asset<PoolType: store,
                              AssetT: store>(
         account: &signer): AssetWrapper<PoolType, AssetT> acquires Stake {
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
@@ -105,6 +105,14 @@ module Governance {
             asset,
             asset_weight: stake.asset_weight
         }
+    }
+
+    public fun borrow<PoolType, AssetT>(a: &mut AssetWrapper<PoolType, AssetT>): (&mut AssetT, u128) {
+        (&mut a.asset, a.asset_weight)
+    }
+
+    public fun modify<PoolType, AssetT>(a: &mut AssetWrapper<PoolType, AssetT>, amount: u128) {
+        a.asset_weight = amount;
     }
 
     /// Build a new asset from outside
@@ -128,7 +136,7 @@ module Governance {
             let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
             // perform settlement before add weight
             settle<PoolType, GovTokenT, AssetT>(gov_asset, stake);
-            stake.asset_weight = stake.asset_weight + asset_weight;
+            stake.asset_weight = asset_weight;
             Option::fill(&mut stake.asset, asset);
         } else {
             move_to(account, Stake<PoolType, AssetT> {
@@ -156,15 +164,15 @@ module Governance {
         // Perform settlement
         settle<PoolType, GovTokenT, AssetT>(gov, stake);
 
-        stake.asset_weight = stake.asset_weight - asset_weight;
+        stake.asset_weight = asset_weight;
         Option::fill(&mut stake.asset, asset);
     }
 
     /// Withdraw governance token from stake
     public fun withdraw<PoolType: store,
                         GovTokenT: store,
-                        AssetT : store>(account: &signer,
-                                        amount: u128) acquires Governance, GovernanceAsset, Stake {
+                        AssetT: store>(account: &signer,
+                                       amount: u128) acquires Governance, GovernanceAsset, Stake {
         let token_issuer = Token::token_address<GovTokenT>();
         let gov = borrow_global_mut<Governance<PoolType, GovTokenT>>(token_issuer);
         let gov_asset = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(token_issuer);

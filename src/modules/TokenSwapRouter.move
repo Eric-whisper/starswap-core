@@ -17,6 +17,7 @@ module TokenSwapRouter {
     const ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED: u64 = 1006;
     const ERROR_ROUTER_X_IN_OVER_LIMIT_MAX: u64 = 1007;
     const ERROR_ROUTER_ADD_LIQUIDITY_FAILED: u64 = 1008;
+    const ERROR_ROUTER_WITHDRAW_INSUFFICIENT: u64 = 1009;
 
 
     ///
@@ -280,6 +281,21 @@ module TokenSwapRouter {
         let numerator = reserve_in * amount_out * 1000;
         let denominator = (reserve_out - amount_out) * 997;
         numerator / denominator + 1
+    }
+
+    /// Withdraw liquidity from users
+    public fun withdraw_liquidity_token<X: store, Y: store>(account: &signer,
+                                                            amount: u128): Token::Token<LiquidityToken<X, Y>> {
+        let user_liquidity = liquidity<X, Y>(Signer::address_of(account));
+        assert(user_liquidity <= amount, ERROR_ROUTER_WITHDRAW_INSUFFICIENT);
+
+        Account::withdraw<LiquidityToken<X, Y>>(account, amount)
+    }
+
+    /// Deposit liquidity token into user source list
+    public fun deposit_liquidity_token<X: store, Y: store>(account: address,
+                                                           to_deposit: Token::Token<LiquidityToken<X, Y>>) {
+        Account::deposit<LiquidityToken<X, Y>>(account, to_deposit);
     }
 }
 }

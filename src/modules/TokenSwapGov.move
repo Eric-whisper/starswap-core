@@ -5,46 +5,82 @@
 address 0x81144d60492982a45ba93fba47cae988 {
 module TokenSwapGov {
     use 0x1::Governance;
-    use 0x1::GovernanceParamDao;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwap;
+    use 0x1::Account;
+    use 0x1::Signer;
+    use 0x1::Token;
+    // use 0x1::GovernanceDaoProposal;
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwap::LiquidityToken;
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+
+    const ERROR_UNSTAKE_INSUFFICIENT: u64 = 1001;
+
+    struct PoolType<TokenX, TokenY> has store {}
 
     /// Initialize Liquidity pair gov pool, only called by token issuer
-    public fun initialize<X: store, Y: store, GovTokenType: store>(account :&signer,
-                                                                   amount: u128,
-                                                                   precision: u128) {
-        let gov_token_freeze = Account::withdraw(account, amount);
-        let modify_cap = Governance::initialize<GovTokenType, TokenSwap::LiquidityToken<X,Y>>(
-            account, gov_token_freeze, 60, 100, precision);
+    public fun initialize<X: store,
+                          Y: store,
+                          GovTokenT: store>(
+        account: &signer,
+        amount: u128,
+        _precision: u128) {
+        let gov_token_freeze = Account::withdraw<GovTokenT>(account, amount);
+        Governance::initialize<PoolType<X, Y>, GovTokenT>(account, gov_token_freeze);
 
-        // Add to DAO
-        GovernanceDaoProposal::plugin<GovTokenType>(signer, modify_cap);
+        // To determine how many amount release in every period
+        //        let modify_cap = Governance::initialize_asset<PoolType<X, Y>, GovTokenT>(account, 100);
+        //
+        //        // Add to DAO
+        //        GovernanceDaoProposal::plugin<
+        //            PoolType<X, Y>,
+        //            GovTokenT,
+        //            Token::Token<LiquidityToken<X, Y>>>(
+        //            account, modify_cap);
     }
 
     /// Stake liquidity Token pair
-    public fun stake_liquidity<X: store, Y: store, GovTokenType: store>(account :&signer, amount: u128) {
-        let lptoken = TokenSwap::withdraw_lptoken<X, Y>(amount);
-        if (Governance::exists_at<GovTokenType, TokenSwap::LiquidityToken<X, Y>>()) {
-            let asset_wrapper = Governance::borrow_assets<
-                GovTokenType, TokenSwap::LiquidityToken<X, Y>>(account, lptoken);
-            Token::deposit<TokenSwap::LiquidityToken<X, Y>>(&mut asset_wrapper.asset, lptoken);
-            Governance::stake(account, asset_wrapper);
+    public fun stake<X: store, Y: store, GovTokenT: store>(account: &signer, amount: u128) {
+        let liquidity_token = TokenSwapRouter::withdraw_liquidity_token<X, Y>(account, amount);
+
+        if (Governance::exists_at<PoolType<X, Y>, GovTokenT>()) {
+            let asset_wrapper = Governance::borrow_asset<PoolType<X, Y>, Token::Token<LiquidityToken<X, Y>>>(account);
+            let (asset, asset_weight) = Governance::borrow<PoolType<X, Y>, Token::Token<LiquidityToken<X, Y>>>(&mut asset_wrapper);
+
+            Token::deposit<LiquidityToken<X, Y>>(asset, liquidity_token);
+            Governance::modify(&mut asset_wrapper, asset_weight + amount);
+
+            Governance::stake<PoolType<X, Y>, GovTokenT, Token::Token<LiquidityToken<X, Y>>>(account, asset_wrapper);
         } else {
-            let asset_wrapper = Governance::build_new_asset<>(lptoken, amount);
-            Governance::stake(account, asset_wrapper);
+            let asset_wrapper = Governance::build_new_asset<PoolType<X, Y>, Token::Token<LiquidityToken<X, Y>>>(liquidity_token, amount);
+            Governance::stake<PoolType<X, Y>, GovTokenT, Token::Token<LiquidityToken<X, Y>>>(account, asset_wrapper);
         };
     }
 
     /// Unstake liquidity Token pair
-    public fun unstake_liquidity<X: store, Y: store>(account :&signer, amount: u128) {
-        let asset_wrapper = Governance::borrow_assets<GovTokenType>(account, lptoken);
-        TokenSwap::deposit<X, Y>(account, asset_wrapper.asset);
-        Governance::unstake(account, asset_wrapper);
+    public fun unstake<X: store,
+                       Y: store,
+                       GovTokenT: store
+    >(account: &signer, amount: u128) {
+        let asset_wrapper = Governance::borrow_asset<PoolType<X, Y>, Token::Token<LiquidityToken<X, Y>>>(account);
+        let (asset, asset_weight) = Governance::borrow<PoolType<X, Y>, Token::Token<LiquidityToken<X, Y>>>(&mut asset_wrapper);
+
+        assert(asset_weight >= amount, ERROR_UNSTAKE_INSUFFICIENT);
+
+        TokenSwapRouter::deposit_liquidity_token<X, Y>(
+            Signer::address_of(account),
+            Token::withdraw<LiquidityToken<X, Y>>(asset, amount));
+
+        Governance::unstake<PoolType<X, Y>, GovTokenT, Token::Token<LiquidityToken<X, Y>>>(account, asset_wrapper);
     }
 
     /// Get award from token pool
-    public fun receive_award<X: store, Y: store>(account :&signer, amount: u128) {
-
+    public fun withdraw<X: store, Y: store, GovTokenT: store>(account: &signer, amount: u128) {
+        Governance::withdraw<PoolType<X, Y>, GovTokenT, Token::Token<LiquidityToken<X, Y>>>(account, amount);
     }
 
+    /// Return calculated APY
+    public fun apy<X: store, Y: store>(): u128 {
+        // TODO(bobong): calculate APY
+        0
+    }
 }
 }

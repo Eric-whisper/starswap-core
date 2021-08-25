@@ -256,6 +256,5 @@ module TokenSwap {
 
         token_pair.last_block_timestamp = block_timestamp;
     }
-
 }
 }
