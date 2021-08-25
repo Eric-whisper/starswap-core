@@ -2,5 +2,6 @@
 build/
 storage/
 .idea
+.vscode/
 #my_token/
 package/
