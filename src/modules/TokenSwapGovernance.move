@@ -32,8 +32,8 @@ module TokenSwapGovernance {
         burn_cap: Token::BurnCapability<TBD::TBD>,
     }
 
-    struct GovModfiyParamCapability<PoolType> has key, store {
-        cap: Governance::ParameterModifyCapability<PoolType>,
+    struct GovModfiyParamCapability<PoolType, AssetT> has key, store {
+        cap: Governance::ParameterModifyCapability<PoolType, AssetT>,
     }
 
     /// Initial as genesis that will create pool list by Starswap Ecnomic Model list
@@ -70,7 +70,7 @@ module TokenSwapGovernance {
         let team_pool_cap = Governance::initialize_asset<
             PoolTypeTeam,
             LinearReleaseAsset>(&account, release_per_seconds_in_2y_10p, 15552000);
-        move_to(&account, GovModfiyParamCapability<PoolTypeTeam> {
+        move_to(&account, GovModfiyParamCapability<PoolTypeTeam, LinearReleaseAsset> {
             cap: team_pool_cap,
         });
 
@@ -81,7 +81,7 @@ module TokenSwapGovernance {
         let invest_pool_cap = Governance::initialize_asset<
             PoolTypeInvestor,
             LinearReleaseAsset>(&account, release_per_seconds_in_2y_10p, 0);
-        move_to(&account, GovModfiyParamCapability<PoolTypeInvestor> {
+        move_to(&account, GovModfiyParamCapability<PoolTypeInvestor, LinearReleaseAsset> {
             cap: invest_pool_cap,
         });
 
@@ -92,7 +92,7 @@ module TokenSwapGovernance {
         let maintenance_pool_cap = Governance::initialize_asset<
             PoolTypeTechMaintenance,
             LinearReleaseAsset>(&account, relese_per_seconds_in_1y_2p, 0);
-        move_to(&account, GovModfiyParamCapability<PoolTypeTechMaintenance> {
+        move_to(&account, GovModfiyParamCapability<PoolTypeTechMaintenance, LinearReleaseAsset> {
             cap: maintenance_pool_cap,
         });
 
@@ -103,7 +103,7 @@ module TokenSwapGovernance {
         let market_pool_cap = Governance::initialize_asset<
             PoolTypeMarket,
             LinearReleaseAsset>(&account, relese_per_seconds_in_1y_2p, 0);
-        move_to(&account, GovModfiyParamCapability<PoolTypeMarket> {
+        move_to(&account, GovModfiyParamCapability<PoolTypeMarket, LinearReleaseAsset> {
             cap: market_pool_cap,
         });
 
@@ -128,7 +128,7 @@ module TokenSwapGovernance {
         asset.value = asset.value + amount;
         Governance::modify(&mut asset_wrapper, asset_weight + amount);
 
-        let cap = borrow_global<GovModfiyParamCapability<PoolType>>(Signer::address_of(&account));
+        let cap = borrow_global<GovModfiyParamCapability<PoolType, LinearReleaseAsset>>(Signer::address_of(&account));
         Governance::stake_with_cap<PoolType, TBD::TBD, LinearReleaseAsset>(beneficiary, asset_wrapper, &cap.cap);
     }
 

@@ -36,7 +36,7 @@ module Governance {
     }
 
     /// Capability to modify parameter such as period and release amount
-    struct ParameterModifyCapability<PoolType> has key, store {}
+    struct ParameterModifyCapability<PoolType, AssetT> has key, store {}
 
     /// Asset wrapper
     struct AssetWrapper<PoolType, AssetT> has key {
@@ -70,7 +70,7 @@ module Governance {
     public fun initialize_asset<PoolType: store, AssetT: store>(
         account: &signer,
         release_per_second: u128,
-        delay: u64): ParameterModifyCapability<PoolType> {
+        delay: u64): ParameterModifyCapability<PoolType, AssetT> {
         assert(!exists_asset_at<PoolType, AssetT>(), ERR_GOVER_INIT_REPEATE);
 
         move_to(account, GovernanceAsset<PoolType, AssetT> {
@@ -80,13 +80,13 @@ module Governance {
             release_per_second,
             delay: Timestamp::now_seconds() + delay,
         });
-        ParameterModifyCapability<PoolType> {}
+        ParameterModifyCapability<PoolType, AssetT> {}
     }
 
     public fun modify_parameter<PoolType: store,
                                 GovTokenT: store,
                                 AssetT: store>(
-        _cap: &ParameterModifyCapability<PoolType>,
+        _cap: &ParameterModifyCapability<PoolType, AssetT>,
         release_per_second: u128) acquires GovernanceAsset {
         let token_issuer = Token::token_address<GovTokenT>();
         let gov_asset = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(token_issuer);
@@ -161,7 +161,7 @@ module Governance {
                               AssetT: store>(
         account: address,
         asset_wrapper: AssetWrapper<PoolType, AssetT>,
-        _cap: &ParameterModifyCapability<PoolType>
+        _cap: &ParameterModifyCapability<PoolType, AssetT>
     ) acquires GovernanceAsset, Stake {
         inner_stake<PoolType, GovTokenT, AssetT>(account, asset_wrapper);
     }

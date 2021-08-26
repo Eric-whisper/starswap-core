@@ -15,16 +15,28 @@ module TokenSwapFarm {
 
     const ERROR_UNSTAKE_INSUFFICIENT: u64 = 1001;
 
+    struct FarmParameterModfiyCapability<PoolType, AssetT> has key, store {
+        cap: Governance::ParameterModifyCapability<PoolType, AssetT>
+    }
+
     /// Initialize Liquidity pair gov pool, only called by token issuer
-    public fun add_farm<TokenX: store + copy + drop, TokenY: store + copy + drop>(
+    public fun add_farm<TokenX: store, TokenY: store>(
         account: &signer,
-        release_per_seconds: u128)
-    : Governance::ParameterModifyCapability<TokenSwapGovernance::PoolTypeLPTokenMint> {
+        release_per_seconds: u128) {
+        // Only called by the genesis
+        TBD::assert_genesis_address(account);
+
         // To determine how many amount release in every period
-        Governance::initialize_asset<
+        let cap = Governance::initialize_asset<
             TokenSwapGovernance::PoolTypeLPTokenMint,
-            LiquidityToken<TokenX, TokenY>>(account, release_per_seconds, 0)
-//        // Add to DAO
+            LiquidityToken<TokenX, TokenY>>(account, release_per_seconds, 0);
+
+        move_to(account, FarmParameterModfiyCapability<
+            TokenSwapGovernance::PoolTypeLPTokenMint,
+            LiquidityToken<TokenX, TokenY>> {
+            cap
+        });
+//        // TODO (BobOng): Add to DAO
 //        GovernanceDaoProposal::plugin<
 //            PoolTypeProposal<TokenX, TokenY, GovTokenT>,
 //            GovTokenT>(account, modify_cap);
@@ -66,8 +78,7 @@ module TokenSwapFarm {
 
     /// Unstake liquidity Token pair
     public fun unstake<TokenX: store,
-                       TokenY: store,
-                       GovTokenT: store>(
+                       TokenY: store>(
         account: &signer, amount: u128) {
         let asset_wrapper = Governance::borrow_asset<
             TokenSwapGovernance::PoolTypeLPTokenMint,
@@ -93,8 +104,7 @@ module TokenSwapFarm {
 
     /// Harvest reward from token pool
     public fun harvest<TokenX: store,
-                       TokenY: store,
-                       GovTokenT: store>(
+                       TokenY: store>(
         account: &signer, amount: u128) {
         Governance::harvest<
             TokenSwapGovernance::PoolTypeLPTokenMint,
