@@ -106,6 +106,8 @@ module TokenSwapGovernance {
         move_to(&account, GovModfiyParamCapability<PoolTypeMarket> {
             cap: market_pool_cap,
         });
+
+        // TODO(BobOng): to dispatch 1. 1% market value 2. 42% DAO and cross chain pool
     }
 
     /// Called by user, the user claim pool have stake asset
