@@ -297,5 +297,9 @@ module TokenSwapRouter {
                                                            to_deposit: Token::Token<LiquidityToken<X, Y>>) {
         Account::deposit<LiquidityToken<X, Y>>(account, to_deposit);
     }
+
+    public fun router_swap<X: store, Y: store, Z: store>() {
+
+    }
 }
 }

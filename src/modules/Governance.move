@@ -105,8 +105,8 @@ module Governance {
     /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
     public fun borrow_asset<PoolType: store,
                             AssetT: store>(
-        account: &signer): AssetWrapper<PoolType, AssetT> acquires Stake {
-        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
+        account: address): AssetWrapper<PoolType, AssetT> acquires Stake {
+        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
         let asset = Option::extract(&mut stake.asset);
         AssetWrapper<PoolType, AssetT> {
             asset,
@@ -178,26 +178,6 @@ module Governance {
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
         // perform settlement before add weight
         settle<PoolType, GovTokenT, AssetT>(gov_asset, stake);
-        stake.asset_weight = asset_weight;
-        Option::fill(&mut stake.asset, asset);
-    }
-
-    /// Unstake asset from stake pool
-    public fun unclaim<PoolType: store,
-                       GovTokenT: store,
-                       AssetT : store>(
-        account: &signer,
-        asset_wrapper: AssetWrapper<PoolType, AssetT>) acquires Stake, GovernanceAsset {
-        let AssetWrapper<PoolType, AssetT> { asset, asset_weight } = asset_wrapper;
-
-        // Get back asset, and destroy Stake object
-        let token_issuer = Token::token_address<GovTokenT>();
-        let gov = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(token_issuer);
-        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
-
-        // Perform settlement
-        settle<PoolType, GovTokenT, AssetT>(gov, stake);
-
         stake.asset_weight = asset_weight;
         Option::fill(&mut stake.asset, asset);
     }
