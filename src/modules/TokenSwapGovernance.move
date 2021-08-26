@@ -110,10 +110,7 @@ module TokenSwapGovernance {
 
     /// Called by user, the user claim pool have stake asset
     public(script) fun claim<PoolType: store>(account: signer) {
-        Governance::exists_stake_at_address<PoolType, TBD::TBD>(Signer::address_of(&account));
-        let asset = LinearReleaseAsset { value: 0 };
-        let asset_wrapper = Governance::build_new_asset<PoolType, LinearReleaseAsset>(asset, 0);
-        Governance::stake<PoolType, TBD::TBD, LinearReleaseAsset>(&account, asset_wrapper);
+        Governance::claim<PoolType, TBD::TBD, LinearReleaseAsset>(&account, LinearReleaseAsset { value: 0 });
     }
 
     /// Called by admin, increase or decrease linear asset value
