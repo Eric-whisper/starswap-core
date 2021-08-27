@@ -40,7 +40,6 @@ module TokenSwapFarmScript {
         } else {
             TokenSwapFarm::unstake<TokenY, TokenX>(&account, amount);
         }
-
     }
 
     /// Havest governance token from pool
@@ -53,5 +52,28 @@ module TokenSwapFarmScript {
             TokenSwapFarm::harvest<TokenY, TokenX>(&account, amount);
         }
     }
+
+    /// Get gain count
+    public fun lookup_gain<TokenX: store, TokenY: store>(account: signer) : u128 {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::lookup_gain<TokenX, TokenY>(&account)
+        } else {
+            TokenSwapFarm::lookup_gain<TokenY, TokenX>(&account)
+        }
+    }
+
+    /// Lookup APY
+    public fun apy<TokenX: store, TokenY: store>() : u128 {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::apy<TokenX, TokenY>()
+        } else {
+            TokenSwapFarm::apy<TokenY, TokenX>()
+        }
+    }
+
 }
 }

@@ -44,7 +44,6 @@ module TokenSwapFarm {
 
     /// Stake liquidity Token pair
     public fun stake<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
-
         // If not claim, then claiming it
         if (!Governance::exists_stake_at_address<
             TokenSwapGovernance::PoolTypeLPTokenMint,
@@ -104,8 +103,7 @@ module TokenSwapFarm {
 
     /// Harvest reward from token pool
     public fun harvest<TokenX: store,
-                       TokenY: store>(
-        account: &signer, amount: u128) {
+                       TokenY: store>(account: &signer, amount: u128) {
         Governance::harvest<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
@@ -113,9 +111,18 @@ module TokenSwapFarm {
     }
 
     /// Return calculated APY
+    public fun lookup_gain<TokenX: store, TokenY: store>(account: &signer): u128 {
+        Governance::query_gov_token_amount<
+            TokenSwapGovernance::PoolTypeLPTokenMint,
+            TBD::TBD,
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(account)
+    }
+
+    /// Return calculated APY
     public fun apy<TokenX: store, TokenY: store>(): u128 {
         // TODO(bobong): calculate APY
         0
     }
+
 }
 }

@@ -29,10 +29,11 @@ module Governance {
         asset_total_weight: u128,
         harvest_index: u128,
         last_update_timestamp: u64,
-        release_per_second: u128,
         // Release count per seconds
-        delay: u64,
+        release_per_second: u128,
         // delay time, by seconds, user can operate stake only after this timestamp
+        delay: u64,
+        withdraw_amount: u128,
     }
 
     /// Capability to modify parameter such as period and release amount
@@ -79,6 +80,7 @@ module Governance {
             last_update_timestamp: Timestamp::now_seconds(),
             release_per_second,
             delay: Timestamp::now_seconds() + delay,
+            withdraw_amount: 0,
         });
         ParameterModifyCapability<PoolType, AssetT> {}
     }
@@ -90,7 +92,6 @@ module Governance {
         release_per_second: u128) acquires GovernanceAsset {
         let token_issuer = Token::token_address<GovTokenT>();
         let gov_asset = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(token_issuer);
-        gov_asset.release_per_second = release_per_second;
 
         // Recalculate harvest index
         let new_harvest_index = calculate_harvest_index(
@@ -100,6 +101,7 @@ module Governance {
             gov_asset.release_per_second);
         gov_asset.harvest_index = new_harvest_index;
         gov_asset.last_update_timestamp = Timestamp::now_seconds();
+        gov_asset.release_per_second = release_per_second;
     }
 
     /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
