@@ -112,7 +112,8 @@ module TokenSwapGovernance {
 
     /// Called by user, the user claim pool have stake asset
     public(script) fun claim<PoolType: store>(account: signer) {
-        Governance::claim<PoolType, TBD::TBD, LinearReleaseAsset>(&account, LinearReleaseAsset { value: 0 });
+        Governance::claim<PoolType, TBD::TBD, LinearReleaseAsset>(
+            &account, TBD::token_address(), LinearReleaseAsset { value: 0 });
     }
 
     /// Called by admin, increase or decrease linear asset value
@@ -128,8 +129,10 @@ module TokenSwapGovernance {
         asset.value = asset.value + amount;
         Governance::modify(&mut asset_wrapper, asset_weight + amount);
 
-        let cap = borrow_global<GovModfiyParamCapability<PoolType, LinearReleaseAsset>>(Signer::address_of(&account));
-        Governance::stake_with_cap<PoolType, TBD::TBD, LinearReleaseAsset>(beneficiary, asset_wrapper, &cap.cap);
+        let cap = borrow_global<GovModfiyParamCapability<PoolType, LinearReleaseAsset>>(
+            Signer::address_of(&account));
+        Governance::stake_with_cap<PoolType, TBD::TBD, LinearReleaseAsset>(
+            beneficiary, Signer::address_of(&account), asset_wrapper, &cap.cap);
     }
 
     /// Harverst TBD by given pool type, call ed by user
@@ -137,8 +140,8 @@ module TokenSwapGovernance {
         let gain = Governance::query_gov_token_amount<
             LinearPoolType,
             TBD::TBD,
-            LinearReleaseAsset>(&account);
-        let token = Governance::harvest<LinearPoolType, TBD::TBD, LinearReleaseAsset>(&account, gain);
+            LinearReleaseAsset>(&account, TBD::token_address());
+        let token = Governance::harvest<LinearPoolType, TBD::TBD, LinearReleaseAsset>(&account, TBD::token_address(), gain);
         Account::deposit<TBD::TBD>(Signer::address_of(&account), token);
     }
 }

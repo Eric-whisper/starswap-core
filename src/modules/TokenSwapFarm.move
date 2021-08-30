@@ -49,12 +49,13 @@ module TokenSwapFarm {
         if (!Governance::exists_stake_at_address<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(Signer::address_of(account))) {
-            let lp_token = TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, 0);
+            let lp_token =
+                TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, 0);
 
             Governance::claim<
                 TokenSwapGovernance::PoolTypeLPTokenMint,
                 TBD::TBD,
-                Token::Token<LiquidityToken<TokenX, TokenY>>>(account, lp_token);
+                Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address(), lp_token);
         };
 
         let lp_token = TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, amount);
@@ -73,7 +74,8 @@ module TokenSwapFarm {
         Governance::stake<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
-            Token::Token<LiquidityToken<TokenX, TokenY>>>(account, asset_wrapper);
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(
+            account, TBD::token_address(), asset_wrapper);
     }
 
     /// Unstake liquidity Token pair
@@ -99,7 +101,8 @@ module TokenSwapFarm {
         Governance::stake<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
-            Token::Token<LiquidityToken<TokenX, TokenY>>>(account, asset_wrapper);
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(
+            account, TBD::token_address(), asset_wrapper);
     }
 
     /// Harvest reward from token pool
@@ -108,7 +111,7 @@ module TokenSwapFarm {
         let token = Governance::harvest<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
-            Token::Token<LiquidityToken<TokenX, TokenY>>>(account, amount);
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address(), amount);
         Account::deposit<TBD::TBD>(Signer::address_of(account), token);
     }
 
@@ -117,7 +120,7 @@ module TokenSwapFarm {
         Governance::query_gov_token_amount<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
-            Token::Token<LiquidityToken<TokenX, TokenY>>>(account)
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address())
     }
 
     /// Return calculated APY
