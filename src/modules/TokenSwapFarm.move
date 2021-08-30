@@ -7,6 +7,7 @@ module TokenSwapFarm {
     use 0x1::Governance;
     use 0x1::Signer;
     use 0x1::Token;
+    use 0x1::Account;
     //use 0x1::GovernanceDaoProposal;
     use 0x81144d60492982a45ba93fba47cae988::TBD;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwap::LiquidityToken;
@@ -104,10 +105,11 @@ module TokenSwapFarm {
     /// Harvest reward from token pool
     public fun harvest<TokenX: store,
                        TokenY: store>(account: &signer, amount: u128) {
-        Governance::harvest<
+        let token = Governance::harvest<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(account, amount);
+        Account::deposit<TBD::TBD>(Signer::address_of(account), token);
     }
 
     /// Return calculated APY

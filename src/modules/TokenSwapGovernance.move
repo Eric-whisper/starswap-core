@@ -138,7 +138,8 @@ module TokenSwapGovernance {
             LinearPoolType,
             TBD::TBD,
             LinearReleaseAsset>(&account);
-        Governance::harvest<LinearPoolType, TBD::TBD, LinearReleaseAsset>(&account, gain);
+        let token = Governance::harvest<LinearPoolType, TBD::TBD, LinearReleaseAsset>(&account, gain);
+        Account::deposit<TBD::TBD>(Signer::address_of(&account), token);
     }
 }
 }
