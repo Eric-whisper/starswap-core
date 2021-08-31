@@ -16,9 +16,9 @@ module TBD {
     const ERROR_NOT_GENESIS_ACCOUNT: u64 = 10001;
 
     /// TBD initialization.
-    public fun init(account: signer) {
-        Token::register_token<TBD>(&account, PRECISION);
-        Account::do_accept_token<TBD>(&account);
+    public fun init(account: &signer) {
+        Token::register_token<TBD>(account, PRECISION);
+        Account::do_accept_token<TBD>(account);
     }
 
     // Mint function, block ability of mint and burn after execution

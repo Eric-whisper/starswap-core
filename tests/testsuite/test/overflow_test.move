@@ -53,7 +53,7 @@ script {
 //! sender: alice
 address alice = {{alice}};
 script {
-use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
     use 0x1::STC;
     use alice::TokenMock;
     fun add_liquidity_overflow(signer: signer) {
