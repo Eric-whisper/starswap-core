@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 address 0x1 {
-module GovernanceDaoProposal {
-    use 0x1::Governance;
+module YieldFarmingDaoProposal {
+    use 0x1::YieldFarming;
     use 0x1::Dao;
     use 0x1::Token;
     use 0x1::Signer;
@@ -11,9 +11,9 @@ module GovernanceDaoProposal {
 
     const ERR_NOT_AUTHORIZED: u64 = 401;
 
-    /// A wrapper of `Governance::ParameterModifyCapability`.
+    /// A wrapper of `YieldFarming::ParameterModifyCapability`.
     struct GovernanceCapability<PoolType, TokenT> has key {
-        cap: Governance::ParameterModifyCapability,
+        cap: YieldFarming::ParameterModifyCapability,
     }
 
     struct GovernanceProposalAction<PoolType> has copy, drop, store {
@@ -23,7 +23,7 @@ module GovernanceDaoProposal {
     /// Add dao of governance ability
     public fun plugin<PoolType: copy + drop + store,
                       TokenT: copy + drop + store>(
-        account: &signer, cap: Governance::ParameterModifyCapability) {
+        account: &signer, cap: YieldFarming::ParameterModifyCapability) {
         let token_issuer = Token::token_address<TokenT>();
         assert(Signer::address_of(account) == token_issuer, Errors::requires_address(ERR_NOT_AUTHORIZED));
 
@@ -62,7 +62,7 @@ module GovernanceDaoProposal {
             Dao::extract_proposal_action<TokenT, GovernanceProposalAction<PoolType>>(proposer_address, proposal_id);
 
         let cap = borrow_global<GovernanceCapability<PoolType, TokenT>>(Token::token_address<TokenT>());
-        Governance::modify_parameter<PoolType, TokenT, AssetT>(&cap.cap, period_release_amount);
+        YieldFarming::modify_parameter<PoolType, TokenT, AssetT>(&cap.cap, period_release_amount);
     }
 }
 }

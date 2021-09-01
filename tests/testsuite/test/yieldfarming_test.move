@@ -8,13 +8,13 @@
 address alice = {{alice}};
 module alice::TokenMock {
     use 0x1::Token;
-    use 0x1::Governance;
+    use 0x1::YieldFarming;
     use 0x1::Signer;
 
     struct Usdx has copy, drop, store {}
 
     struct GovModfiyParamCapability<PoolType, AssetT> has key, store {
-        cap: Governance::ParameterModifyCapability<PoolType, AssetT>,
+        cap: YieldFarming::ParameterModifyCapability<PoolType, AssetT>,
     }
 
     struct PoolType_A has copy, drop, store {}
@@ -24,8 +24,8 @@ module alice::TokenMock {
     }
 
     public fun initialize(account: &signer, treasury: Token::Token<Usdx>) {
-        Governance::initialize<PoolType_A, Usdx>(account, treasury);
-        let asset_cap = Governance::initialize_asset<PoolType_A, AssetType_A>(account, 1000000000, 0);
+        YieldFarming::initialize<PoolType_A, Usdx>(account, treasury);
+        let asset_cap = YieldFarming::initialize_asset<PoolType_A, AssetType_A>(account, 1000000000, 0);
         move_to(account, GovModfiyParamCapability<PoolType_A, AssetType_A> {
             cap: asset_cap,
         });
@@ -33,24 +33,24 @@ module alice::TokenMock {
 
     /// Claim an asset in to pool
     public fun claim(account: &signer) {
-        Governance::claim<PoolType_A, Usdx, AssetType_A>(
+        YieldFarming::claim<PoolType_A, Usdx, AssetType_A>(
             account, @alice, AssetType_A { value: 0 });
     }
 
     public fun stake(account: &signer, value: u128) {
-        let asset_wrapper = Governance::borrow_asset<PoolType_A, AssetType_A>(Signer::address_of(account));
-        let (asset, _) = Governance::borrow<PoolType_A, AssetType_A>(&mut asset_wrapper);
+        let asset_wrapper = YieldFarming::borrow_asset<PoolType_A, AssetType_A>(Signer::address_of(account));
+        let (asset, _) = YieldFarming::borrow<PoolType_A, AssetType_A>(&mut asset_wrapper);
         asset.value = asset.value + value;
-        Governance::modify<PoolType_A, AssetType_A>(&mut asset_wrapper, asset.value);
-        Governance::stake<PoolType_A, Usdx, AssetType_A>(account, @alice, asset_wrapper);
+        YieldFarming::modify<PoolType_A, AssetType_A>(&mut asset_wrapper, asset.value);
+        YieldFarming::stake<PoolType_A, Usdx, AssetType_A>(account, @alice, asset_wrapper);
     }
 
     public fun harvest(account: &signer) : Token::Token<Usdx> {
-        Governance::harvest<PoolType_A, Usdx, AssetType_A>(account, @alice, 0)
+        YieldFarming::harvest<PoolType_A, Usdx, AssetType_A>(account, @alice, 0)
     }
 
     public fun query_gov_token_amount(account: &signer) : u128 {
-        Governance::query_gov_token_amount<PoolType_A, Usdx, AssetType_A>(account, @alice)
+        YieldFarming::query_gov_token_amount<PoolType_A, Usdx, AssetType_A>(account, @alice)
     }
 }
 // check: EXECUTED
@@ -63,7 +63,7 @@ module alice::TokenMock {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::Governance;
+    use 0x1::YieldFarming;
     use 0x1::Debug;
     //use 0x1::Timestamp;
 
@@ -73,7 +73,7 @@ script {
         let _asset_weight = 1000;
         let _asset_total_weight = 1000;
 
-        let index_2 = Governance::calculate_harvest_index(1000, 10000, last_update_timestamp, 10000);
+        let index_2 = YieldFarming::calculate_harvest_index(1000, 10000, last_update_timestamp, 10000);
         Debug::print(&index_2);
     }
 }

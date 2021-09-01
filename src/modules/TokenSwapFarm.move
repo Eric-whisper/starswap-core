@@ -4,7 +4,7 @@
 // TODO: replace the address with admin address
 address 0x81144d60492982a45ba93fba47cae988 {
 module TokenSwapFarm {
-    use 0x1::Governance;
+    use 0x1::YieldFarming;
     use 0x1::Signer;
     use 0x1::Token;
     use 0x1::Account;
@@ -17,7 +17,7 @@ module TokenSwapFarm {
     const ERROR_UNSTAKE_INSUFFICIENT: u64 = 1001;
 
     struct FarmParameterModfiyCapability<PoolType, AssetT> has key, store {
-        cap: Governance::ParameterModifyCapability<PoolType, AssetT>
+        cap: YieldFarming::ParameterModifyCapability<PoolType, AssetT>
     }
 
     /// Initialize Liquidity pair gov pool, only called by token issuer
@@ -28,7 +28,7 @@ module TokenSwapFarm {
         TBD::assert_genesis_address(account);
 
         // To determine how many amount release in every period
-        let cap = Governance::initialize_asset<
+        let cap = YieldFarming::initialize_asset<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             LiquidityToken<TokenX, TokenY>>(account, release_per_seconds, 0);
 
@@ -46,13 +46,13 @@ module TokenSwapFarm {
     /// Stake liquidity Token pair
     public fun stake<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
         // If not claim, then claiming it
-        if (!Governance::exists_stake_at_address<
+        if (!YieldFarming::exists_stake_at_address<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(Signer::address_of(account))) {
             let lp_token =
                 TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, 0);
 
-            Governance::claim<
+            YieldFarming::claim<
                 TokenSwapGovernance::PoolTypeLPTokenMint,
                 TBD::TBD,
                 Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address(), lp_token);
@@ -60,18 +60,18 @@ module TokenSwapFarm {
 
         let lp_token = TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, amount);
 
-        let asset_wrapper = Governance::borrow_asset<
+        let asset_wrapper = YieldFarming::borrow_asset<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(Signer::address_of(account));
 
-        let (asset, asset_weight) = Governance::borrow<
+        let (asset, asset_weight) = YieldFarming::borrow<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(&mut asset_wrapper);
 
         Token::deposit<LiquidityToken<TokenX, TokenY>>(asset, lp_token);
-        Governance::modify(&mut asset_wrapper, asset_weight + amount);
+        YieldFarming::modify(&mut asset_wrapper, asset_weight + amount);
 
-        Governance::stake<
+        YieldFarming::stake<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(
@@ -82,11 +82,11 @@ module TokenSwapFarm {
     public fun unstake<TokenX: store,
                        TokenY: store>(
         account: &signer, amount: u128) {
-        let asset_wrapper = Governance::borrow_asset<
+        let asset_wrapper = YieldFarming::borrow_asset<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(Signer::address_of(account));
 
-        let (asset, asset_weight) = Governance::borrow<
+        let (asset, asset_weight) = YieldFarming::borrow<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(&mut asset_wrapper);
 
@@ -96,9 +96,9 @@ module TokenSwapFarm {
             Signer::address_of(account),
             Token::withdraw<LiquidityToken<TokenX, TokenY>>(asset, amount));
 
-        Governance::modify(&mut asset_wrapper, asset_weight - amount);
+        YieldFarming::modify(&mut asset_wrapper, asset_weight - amount);
 
-        Governance::stake<
+        YieldFarming::stake<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(
@@ -108,7 +108,7 @@ module TokenSwapFarm {
     /// Harvest reward from token pool
     public fun harvest<TokenX: store,
                        TokenY: store>(account: &signer, amount: u128) {
-        let token = Governance::harvest<
+        let token = YieldFarming::harvest<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address(), amount);
@@ -117,7 +117,7 @@ module TokenSwapFarm {
 
     /// Return calculated APY
     public fun lookup_gain<TokenX: store, TokenY: store>(account: &signer): u128 {
-        Governance::query_gov_token_amount<
+        YieldFarming::query_gov_token_amount<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address())
@@ -125,7 +125,7 @@ module TokenSwapFarm {
 
     /// Query all stake amount
     public fun query_total_stake<TokenX: store, TokenY: store>(): u128 {
-        Governance::query_total_stake<
+        YieldFarming::query_total_stake<
             TokenSwapGovernance::PoolTypeLPTokenMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>>(TBD::token_address())
     }
