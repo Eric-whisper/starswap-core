@@ -123,6 +123,13 @@ module TokenSwapFarm {
             Token::Token<LiquidityToken<TokenX, TokenY>>>(account, TBD::token_address())
     }
 
+    /// Query all stake amount
+    public fun query_total_stake<TokenX: store, TokenY: store>(): u128 {
+        Governance::query_total_stake<
+            TokenSwapGovernance::PoolTypeLPTokenMint,
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(TBD::token_address())
+    }
+
     /// Return calculated APY
     public fun apy<TokenX: store, TokenY: store>(): u128 {
         // TODO(bobong): calculate APY

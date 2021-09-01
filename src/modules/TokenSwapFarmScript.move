@@ -64,6 +64,17 @@ module TokenSwapFarmScript {
         }
     }
 
+    /// Query all stake amount
+    public fun query_total_stake<TokenX: store, TokenY: store>() : u128 {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::query_total_stake<TokenX, TokenY>()
+        } else {
+            TokenSwapFarm::query_total_stake<TokenY, TokenX>()
+        }
+    }
+
     /// Lookup APY
     public fun apy<TokenX: store, TokenY: store>() : u128 {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
