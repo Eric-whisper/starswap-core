@@ -25,7 +25,7 @@ module alice::TokenMock {
 
     public fun initialize(account: &signer, treasury: Token::Token<Usdx>) {
         Governance::initialize<PoolType_A, Usdx>(account, treasury);
-        let asset_cap = Governance::initialize_asset<PoolType_A, AssetType_A>(account, 100, 0);
+        let asset_cap = Governance::initialize_asset<PoolType_A, AssetType_A>(account, 1000000000, 0);
         move_to(account, GovModfiyParamCapability<PoolType_A, AssetType_A> {
             cap: asset_cap,
         });
@@ -58,7 +58,26 @@ module alice::TokenMock {
 //! block-prologue
 //! author: genesis
 //! block-number: 1
-//! block-time: 10000000
+//! block-time: 86400000
+
+//! new-transaction
+//! sender: alice
+script {
+    use 0x1::Governance;
+    use 0x1::Debug;
+    //use 0x1::Timestamp;
+
+    /// Index test
+    fun main(_account: signer) {
+        let last_update_timestamp : u64 = 86390;
+        let _asset_weight = 1000;
+        let _asset_total_weight = 1000;
+
+        let index_2 = Governance::calculate_harvest_index(1000, 10000, last_update_timestamp, 10000);
+        Debug::print(&index_2);
+    }
+}
+// check: EXECUTED
 
 //! new-transaction
 //! sender: alice
@@ -93,7 +112,7 @@ script {
     use alice::TokenMock;
 
     fun init(account: signer) {
-        let precision: u8 = 9; //STC precision is also 9.
+        let precision: u8 = 9; //Usdx precision is also 9.
         let scaling_factor = Math::pow(10, (precision as u64));
         let usdx_amount: u128 = 100 * scaling_factor;
 
@@ -106,7 +125,7 @@ script {
 //! block-prologue
 //! author: genesis
 //! block-number: 2
-//! block-time: 100000100
+//! block-time: 86410000
 
 //! new-transaction
 //! sender: joe
@@ -117,7 +136,7 @@ script {
 
     fun init(account: signer) {
         TokenMock::claim(&account);
-        TokenMock::stake(&account, 1000);
+        TokenMock::stake(&account, 10000);
     }
 }
 // check: EXECUTED
@@ -125,7 +144,7 @@ script {
 //! block-prologue
 //! author: genesis
 //! block-number: 3
-//! block-time: 100000100
+//! block-time: 86430000
 
 //! new-transaction
 //! sender: joe
@@ -133,10 +152,12 @@ script {
 address alice = {{alice}};
 script {
    use alice::TokenMock;
+   use 0x1::Debug;
 
    fun init(account: signer) {
        let amount = TokenMock::query_gov_token_amount(&account);
-       assert(amount > 0, 1001);
+       Debug::print(&amount);
+       //assert(amount == 10, 1001);
    }
 }
 // check: EXECUTED

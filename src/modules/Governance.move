@@ -7,7 +7,7 @@ module Governance {
     use 0x1::Signer;
     use 0x1::Option;
     use 0x1::Timestamp;
-    use 0x1::Debug;
+    // use 0x1::Debug;
     use 0x1::GovernanceTreasury;
 
     const ERR_GOVER_INIT_REPEATE: u64 = 101;
@@ -18,6 +18,7 @@ module Governance {
     const ERR_GOVER_STAKE_EXISTS: u64 = 106;
     const ERR_GOVER_STAKE_NOT_EXISTS: u64 = 107;
     const ERR_GOVER_HAVERST_NO_GAIN: u64 = 108;
+    const ERR_GOVER_TOTAL_WEIGHT_IS_ZERO: u64 = 109;
 
     /// The object of governance
     /// GovTokenT meaning token of governance
@@ -95,14 +96,20 @@ module Governance {
         release_per_second: u128) acquires GovernanceAsset {
         let gov_asset = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(broker);
 
+        let now_seconds = Timestamp::now_seconds();
+
         // Recalculate harvest index
-        let new_harvest_index = calculate_harvest_index(
-            gov_asset.harvest_index,
-            gov_asset.asset_total_weight,
-            gov_asset.last_update_timestamp,
-            gov_asset.release_per_second);
-        gov_asset.harvest_index = new_harvest_index;
-        gov_asset.last_update_timestamp = Timestamp::now_seconds();
+        if (gov_asset.asset_total_weight <= 0) {
+            let time_period = now_seconds - gov_asset.last_update_timestamp;
+            gov_asset.harvest_index = gov_asset.harvest_index + (release_per_second * (time_period as u128));
+        } else {
+            gov_asset.harvest_index = calculate_harvest_index(
+                gov_asset.harvest_index,
+                gov_asset.asset_total_weight,
+                gov_asset.last_update_timestamp,
+                gov_asset.release_per_second);
+        };
+        gov_asset.last_update_timestamp = now_seconds;
         gov_asset.release_per_second = release_per_second;
     }
 
@@ -180,7 +187,7 @@ module Governance {
         let gov_asset = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(broker);
 
         // Check locking time
-        assert(gov_asset.start_time < Timestamp::now_seconds(), ERR_GOVER_NOT_STILL_FREEZE);
+        assert(gov_asset.start_time <= Timestamp::now_seconds(), ERR_GOVER_NOT_STILL_FREEZE);
 
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
 
@@ -197,13 +204,6 @@ module Governance {
         };
 
         Option::fill(&mut stake.asset, asset);
-
-        Debug::print(&11111111);
-        Debug::print(&stake.asset_weight);
-        Debug::print(&stake.last_harvest_index);
-        Debug::print(&gov_asset.asset_total_weight);
-        Debug::print(&gov_asset.harvest_index);
-        Debug::print(&22222222);
     }
 
     /// Harvest all token from stake asset
@@ -253,15 +253,14 @@ module Governance {
         // Perform settlement
         settle_with_param<PoolType, GovTokenT, AssetT>(gov_asset, stake);
 
-        Debug::print(&33333333);
-        Debug::print(&stake.asset_weight);
-        Debug::print(&stake.last_harvest_index);
-        Debug::print(&gov_asset.asset_total_weight);
-        Debug::print(&gov_asset.harvest_index);
-        Debug::print(&stake.gain);
-        Debug::print(&44444444);
-
         stake.gain
+    }
+    
+    /// Query total stake count from governance resource
+    public fun query_total_stake<PoolType: store,
+                                 AssetT: store>(broker: address): u128 acquires GovernanceAsset {
+        let gov_asset = borrow_global_mut<GovernanceAsset<PoolType, AssetT>>(broker);
+        gov_asset.asset_total_weight
     }
 
     /// Performing a settlement based given governance object and stake object.
@@ -269,37 +268,41 @@ module Governance {
                           GovTokenT: store,
                           AssetT: store>(gov_asset: &mut GovernanceAsset<PoolType, AssetT>,
                                          stake: &mut Stake<PoolType, AssetT>) {
-        let period_gain = calculate_withdraw_amount(gov_asset.harvest_index, stake.last_harvest_index, stake.asset_weight);
-        stake.last_harvest_index = gov_asset.harvest_index;
-        stake.gain = stake.gain + period_gain;
+        let now_seconds = Timestamp::now_seconds();
+        if (gov_asset.asset_total_weight <= 0) {
+            let time_period = now_seconds - gov_asset.last_update_timestamp;
+            let period_gain = gov_asset.release_per_second * (time_period as u128);
 
-        let new_harvest_index = calculate_harvest_index(
-            gov_asset.harvest_index,
-            gov_asset.asset_total_weight,
-            gov_asset.last_update_timestamp,
-            gov_asset.release_per_second);
-        gov_asset.harvest_index = new_harvest_index;
-        gov_asset.last_update_timestamp = Timestamp::now_seconds();
+            stake.gain = stake.gain + period_gain;
+            gov_asset.harvest_index = 0;
+        } else {
+            let period_gain = calculate_withdraw_amount(gov_asset.harvest_index, stake.last_harvest_index, stake.asset_weight);
+            stake.last_harvest_index = gov_asset.harvest_index;
+            stake.gain = stake.gain + period_gain;
+
+            gov_asset.harvest_index = calculate_harvest_index(
+                gov_asset.harvest_index, 
+                gov_asset.asset_total_weight, 
+                gov_asset.last_update_timestamp, 
+                gov_asset.release_per_second);
+        };
+        gov_asset.last_update_timestamp = now_seconds;
     }
 
-    /// There is calculating from harvest index and global parameters,
-    /// such as inline function in C language.
-    fun calculate_harvest_index(harvest_index: u128,
-                                asset_total_weight: u128,
-                                last_update_timestamp: u64,
-                                release_per_second: u128): u128 {
+    /// There is calculating from harvest index and global parameters
+    public fun calculate_harvest_index(harvest_index: u128,
+                                       asset_total_weight: u128,
+                                       last_update_timestamp: u64,
+                                       release_per_second: u128): u128 {
+        assert(asset_total_weight > 0, ERR_GOVER_TOTAL_WEIGHT_IS_ZERO);
         let time_period = Timestamp::now_seconds() - last_update_timestamp;
-        if (asset_total_weight <= 0) {
-            harvest_index + (release_per_second * (time_period as u128))
-        } else {
-            harvest_index + (release_per_second * (time_period as u128)) / asset_total_weight
-        }
+        harvest_index + (release_per_second * (time_period as u128)) / asset_total_weight
     }
 
     /// This function will return a gain index
-    fun calculate_withdraw_amount(harvest_index: u128,
-                                  last_harvest_index: u128,
-                                  asset_weight: u128): u128 {
+    public fun calculate_withdraw_amount(harvest_index: u128,
+                                         last_harvest_index: u128,
+                                         asset_weight: u128): u128 {
         asset_weight * (harvest_index - last_harvest_index)
     }
 
