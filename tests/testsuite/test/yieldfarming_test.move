@@ -46,7 +46,7 @@ module alice::TokenMock {
     }
 
     public fun harvest(account: &signer) : Token::Token<Usdx> {
-        YieldFarming::harvest<PoolType_A, Usdx, AssetType_A>(account, @alice, 0)
+        YieldFarming::harvest_all<PoolType_A, Usdx, AssetType_A>(account, @alice)
     }
 
     public fun query_gov_token_amount(account: &signer) : u128 {
@@ -64,17 +64,18 @@ module alice::TokenMock {
 //! sender: alice
 script {
     use 0x1::YieldFarming;
-    use 0x1::Debug;
-    //use 0x1::Timestamp;
 
     /// Index test
     fun main(_account: signer) {
-        let last_update_timestamp : u64 = 86390;
-        let _asset_weight = 1000;
-        let _asset_total_weight = 1000;
+        let harvest_index = 100;
+        let last_update_timestamp : u64 = 86395;
+        let _asset_total_weight = 1000000000;
 
-        let index_2 = YieldFarming::calculate_harvest_index(1000, 10000, last_update_timestamp, 10000);
-        Debug::print(&index_2);
+        let index_1 = YieldFarming::calculate_harvest_index(harvest_index, _asset_total_weight, last_update_timestamp, 2000000000);
+        let withdraw_1 = YieldFarming::calculate_withdraw_amount(index_1, harvest_index, _asset_total_weight);
+        assert((2000000000 * 5) == withdraw_1, 10001);
+
+        // TODO: add more calculation for extreme scene ... 
     }
 }
 // check: EXECUTED
@@ -155,29 +156,33 @@ script {
    use 0x1::Debug;
 
    fun init(account: signer) {
-       let amount = TokenMock::query_gov_token_amount(&account);
-       Debug::print(&amount);
-       //assert(amount == 10, 1001);
+        let amount = TokenMock::query_gov_token_amount(&account);
+        Debug::print(&amount);
+        //assert(amount == 10, 1001);
    }
 }
 // check: EXECUTED
 
-////! new-transaction
-////! sender: joe
-////address joe = {{joe}};
-//address alice = {{alice}};
-//script {
-//    use alice::TokenMock;
-//    use 0x1::Account;
-//    use 0x1::Token;
-//    use 0x1::Signer;
-//
-//    fun init(account: signer) {
-//        let token = TokenMock::harvest(&account);
-//        Account::do_accept_token<TokenMock::Usdx>(&account);
-//
-//        let token_balance = Token::value<TokenMock::Usdx>(&token);
-//        assert(token_balance == 10000, 10000);
-//        Account::deposit<TokenMock::Usdx>(Signer::address_of(&account), token);
-//    }
-//}
+//! new-transaction
+//! sender: joe
+//address joe = {{joe}};
+address alice = {{alice}};
+script {
+   use alice::TokenMock;
+   use 0x1::Account;
+   use 0x1::Token;
+   use 0x1::Signer;
+
+   fun init(account: signer) {
+        Account::do_accept_token<TokenMock::Usdx>(&account);
+        let token = TokenMock::harvest(&account);
+        let token_balance = Token::value<TokenMock::Usdx>(&token);
+        // Debug::print(&token_balance);
+
+        assert(token_balance > 0, 1002);
+        Account::deposit<TokenMock::Usdx>(Signer::address_of(&account), token);
+
+        let amount = TokenMock::query_gov_token_amount(&account);
+        assert(amount == 0, 1003);
+   }
+}

@@ -7,7 +7,6 @@ module YieldFarming {
     use 0x1::Signer;
     use 0x1::Option;
     use 0x1::Timestamp;
-    // use 0x1::Debug;
     use 0x1::YieldFarmingTreasury;
     use 0x1::Errors;
 
@@ -138,23 +137,23 @@ module YieldFarming {
         _cap: &ParameterModifyCapability<PoolType, AssetT>,
         broker: address,
         release_per_second: u128) acquires FarmingAsset {
-        let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
+        let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
 
         let now_seconds = Timestamp::now_seconds();
 
         // Recalculate harvest index
-        if (gov_asset.asset_total_weight <= 0) {
-            let time_period = now_seconds - gov_asset.last_update_timestamp;
-            gov_asset.harvest_index = gov_asset.harvest_index + (release_per_second * (time_period as u128));
+        if (farming_asset.asset_total_weight <= 0) {
+            let time_period = now_seconds - farming_asset.last_update_timestamp;
+            farming_asset.harvest_index = farming_asset.harvest_index + (release_per_second * (time_period as u128));
         } else {
-            gov_asset.harvest_index = calculate_harvest_index(
-                gov_asset.harvest_index,
-                gov_asset.asset_total_weight,
-                gov_asset.last_update_timestamp,
-                gov_asset.release_per_second);
+            farming_asset.harvest_index = calculate_harvest_index(
+                farming_asset.harvest_index,
+                farming_asset.asset_total_weight,
+                farming_asset.last_update_timestamp,
+                farming_asset.release_per_second);
         };
-        gov_asset.last_update_timestamp = now_seconds;
-        gov_asset.release_per_second = release_per_second;
+        farming_asset.last_update_timestamp = now_seconds;
+        farming_asset.release_per_second = release_per_second;
     }
 
     /// Borrow from `Stake` object, calling `stake` function to pay back which is `AssetWrapper`
@@ -187,12 +186,12 @@ module YieldFarming {
         assert(!exists_stake_at_address<PoolType, AssetT>(Signer::address_of(account)),
             Errors::invalid_state(ERR_FARMING_STAKE_EXISTS));
 
-        let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
+        let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
 
         move_to(account, Stake<PoolType, AssetT> {
             asset: Option::some(asset),
             asset_weight: 0,
-            last_harvest_index : gov_asset.harvest_index,
+            last_harvest_index : farming_asset.harvest_index,
             gain: 0,
         });
     }
@@ -233,23 +232,23 @@ module YieldFarming {
             asset_weight, 
             asset_origin_weight,
         } = asset_wrapper;
-        let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
+        let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
 
         // Check locking time
-        assert(gov_asset.start_time <= Timestamp::now_seconds(), Errors::invalid_state(ERR_FARMING_NOT_STILL_FREEZE));
+        assert(farming_asset.start_time <= Timestamp::now_seconds(), Errors::invalid_state(ERR_FARMING_NOT_STILL_FREEZE));
 
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
 
         // Perform settlement before add weight
-        settle_with_param<PoolType, GovTokenT, AssetT>(gov_asset, stake);
+        settle_with_param<PoolType, GovTokenT, AssetT>(farming_asset, stake);
 
         stake.asset_weight = asset_weight;
 
         // update stake total weight from asset wrapper
         if (asset_weight > asset_origin_weight) {
-            gov_asset.asset_total_weight = gov_asset.asset_total_weight + (asset_weight - asset_origin_weight);
+            farming_asset.asset_total_weight = farming_asset.asset_total_weight + (asset_weight - asset_origin_weight);
         } else if (asset_weight < asset_origin_weight) {
-            gov_asset.asset_total_weight = gov_asset.asset_total_weight - (asset_origin_weight - asset_weight);
+            farming_asset.asset_total_weight = farming_asset.asset_total_weight - (asset_origin_weight - asset_weight);
         };
 
         Option::fill(&mut stake.asset, asset);
@@ -262,7 +261,7 @@ module YieldFarming {
         account: &signer,
         broker: address) : Token::Token<GovTokenT> acquires Farming, FarmingAsset, Stake {
         let zero: u128 = 0;
-        harvest<PoolType, GovTokenT, AssetT>(account, broker,zero)
+        harvest<PoolType, GovTokenT, AssetT>(account, broker, zero)
     }
 
     /// Harvest yield farming token from stake
@@ -273,22 +272,24 @@ module YieldFarming {
         broker: address,
         amount: u128) : Token::Token<GovTokenT> acquires Farming, FarmingAsset, Stake {
         let gov = borrow_global_mut<Farming<PoolType, GovTokenT>>(broker);
-        let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
+        let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
 
         // Perform settlement
-        settle_with_param<PoolType, GovTokenT, AssetT>(gov_asset, stake);
+        settle_with_param<PoolType, GovTokenT, AssetT>(farming_asset, stake);
 
         assert(stake.gain > 0, Errors::limit_exceeded(ERR_FARMING_HAVERST_NO_GAIN));
         assert(stake.gain >= amount, Errors::limit_exceeded(ERR_FARMING_WITHDRAW_OVERFLOW));
 
         // Withdraw goverment token
         if (amount > 0) {
+            let token = YieldFarmingTreasury::withdraw_with_capability<PoolType, GovTokenT>(&mut gov.withdraw_cap, amount);
             stake.gain = stake.gain - amount;
-            YieldFarmingTreasury::withdraw_with_capability<PoolType, GovTokenT>(&mut gov.withdraw_cap, amount)
+            token
         } else {
+            let token = YieldFarmingTreasury::withdraw_with_capability<PoolType, GovTokenT>(&mut gov.withdraw_cap, stake.gain);
             stake.gain = 0;
-            YieldFarmingTreasury::withdraw_with_capability<PoolType, GovTokenT>(&mut gov.withdraw_cap, stake.gain)
+            token
         }
     }
 
@@ -296,11 +297,11 @@ module YieldFarming {
     public fun query_gov_token_amount<PoolType: store,
                                       GovTokenT: store,
                                       AssetT : store>(account: &signer, broker: address): u128 acquires FarmingAsset, Stake {
-        let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
+        let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
 
         // Perform settlement
-        settle_with_param<PoolType, GovTokenT, AssetT>(gov_asset, stake);
+        settle_with_param<PoolType, GovTokenT, AssetT>(farming_asset, stake);
 
         stake.gain
     }
@@ -308,34 +309,34 @@ module YieldFarming {
     /// Query total stake count from yield farming resource
     public fun query_total_stake<PoolType: store,
                                  AssetT: store>(broker: address): u128 acquires FarmingAsset {
-        let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
-        gov_asset.asset_total_weight
+        let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
+        farming_asset.asset_total_weight
     }
 
     /// Performing a settlement based given yield farming object and stake object.
     fun settle_with_param<PoolType: store,
                           GovTokenT: store,
-                          AssetT: store>(gov_asset: &mut FarmingAsset<PoolType, AssetT>,
+                          AssetT: store>(farming_asset: &mut FarmingAsset<PoolType, AssetT>,
                                          stake: &mut Stake<PoolType, AssetT>) {
         let now_seconds = Timestamp::now_seconds();
-        if (gov_asset.asset_total_weight <= 0) {
-            let time_period = now_seconds - gov_asset.last_update_timestamp;
-            let period_gain = gov_asset.release_per_second * (time_period as u128);
+        if (farming_asset.asset_total_weight <= 0) {
+            let time_period = now_seconds - farming_asset.last_update_timestamp;
+            let period_gain = farming_asset.release_per_second * (time_period as u128);
 
             stake.gain = stake.gain + period_gain;
-            gov_asset.harvest_index = 0;
+            farming_asset.harvest_index = 0;
         } else {
-            let period_gain = calculate_withdraw_amount(gov_asset.harvest_index, stake.last_harvest_index, stake.asset_weight);
-            stake.last_harvest_index = gov_asset.harvest_index;
+            let period_gain = calculate_withdraw_amount(farming_asset.harvest_index, stake.last_harvest_index, stake.asset_weight);
+            stake.last_harvest_index = farming_asset.harvest_index;
             stake.gain = stake.gain + period_gain;
 
-            gov_asset.harvest_index = calculate_harvest_index(
-                gov_asset.harvest_index, 
-                gov_asset.asset_total_weight, 
-                gov_asset.last_update_timestamp, 
-                gov_asset.release_per_second);
+            farming_asset.harvest_index = calculate_harvest_index(
+                farming_asset.harvest_index, 
+                farming_asset.asset_total_weight, 
+                farming_asset.last_update_timestamp, 
+                farming_asset.release_per_second);
         };
-        gov_asset.last_update_timestamp = now_seconds;
+        farming_asset.last_update_timestamp = now_seconds;
     }
 
     /// There is calculating from harvest index and global parameters
