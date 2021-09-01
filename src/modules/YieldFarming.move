@@ -9,16 +9,16 @@ module YieldFarming {
     use 0x1::Timestamp;
     // use 0x1::Debug;
     use 0x1::YieldFarmingTreasury;
+    use 0x1::Errors;
 
     const ERR_FARMING_INIT_REPEATE: u64 = 101;
-    const ERR_FARMING_OBJECT_NONE_EXISTS: u64 = 102;
-    const ERR_FARMING_WITHDRAW_OVERFLOW: u64 = 103;
-    const ERR_FARMING_WEIGHT_DECREASE_OVERLIMIT: u64 = 104;
-    const ERR_FARMING_NOT_STILL_FREEZE: u64 = 105;
-    const ERR_FARMING_STAKE_EXISTS: u64 = 106;
-    const ERR_FARMING_STAKE_NOT_EXISTS: u64 = 107;
-    const ERR_FARMING_HAVERST_NO_GAIN: u64 = 108;
-    const ERR_FARMING_TOTAL_WEIGHT_IS_ZERO: u64 = 109;
+    const ERR_FARMING_WITHDRAW_OVERFLOW: u64 = 102;
+    const ERR_FARMING_NOT_STILL_FREEZE: u64 = 104;
+    const ERR_FARMING_STAKE_EXISTS: u64 = 105;
+    const ERR_FARMING_STAKE_NOT_EXISTS: u64 = 106;
+    const ERR_FARMING_HAVERST_NO_GAIN: u64 = 107;
+    const ERR_FARMING_TOTAL_WEIGHT_IS_ZERO: u64 = 108;
+    const ERR_EXP_DIVIDE_BY_ZERO: u64 = 109;
 
     /// The object of yield farming
     /// GovTokenT meaning token of yield farming
@@ -55,13 +55,56 @@ module YieldFarming {
         gain: u128,
     }
 
+
+    //////////////////////////////////////////////////////////////////////
+    // Exponential functions
+
+    const EXP_SCALE: u128 = 1000000000000000000;// e18
+
+    struct Exp has copy, store, drop {
+        mantissa: u128
+    }
+
+    fun exp(num: u128, denom: u128): Exp {
+        // if overflow move will abort
+        let scaledNumerator = mul_u128(num, EXP_SCALE);
+        let rational = div_u128(scaledNumerator, denom);
+        Exp {
+            mantissa: rational
+        }
+    }
+
+    fun mul_u128(a: u128, b: u128): u128 {
+        if (a == 0 || b == 0) {
+            return 0
+        };
+
+        a * b
+    }
+
+    fun div_u128(a: u128, b: u128): u128 {
+        if ( b == 0) {
+            abort Errors::invalid_argument(ERR_EXP_DIVIDE_BY_ZERO)
+        };
+        if (a == 0) {
+            return 0
+        };
+        a / b
+    }
+
+    fun truncate(exp: Exp): u128 {
+        return exp.mantissa / EXP_SCALE
+    }
+
     /// Called by token issuer
     /// this will declare a yield farming pool
     public fun initialize<
         PoolType: store,
         GovTokenT: store>(account: &signer,
                           treasury: Token::Token<GovTokenT>) {
-        assert(!exists_at<PoolType, GovTokenT>(Signer::address_of(account)), ERR_FARMING_INIT_REPEATE);
+        assert(!exists_at<PoolType, GovTokenT>(
+            Signer::address_of(account)),
+            Errors::invalid_state(ERR_FARMING_INIT_REPEATE));
 
         let withdraw_cap = YieldFarmingTreasury::initialize<PoolType, GovTokenT>(account, treasury);
         move_to(account, Farming<PoolType, GovTokenT> {
@@ -75,7 +118,8 @@ module YieldFarming {
         release_per_second: u128,
         delay: u64): ParameterModifyCapability<PoolType, AssetT> {
 
-        assert(!exists_asset_at<PoolType, AssetT>(Signer::address_of(account)), ERR_FARMING_INIT_REPEATE);
+        assert(!exists_asset_at<PoolType, AssetT>(Signer::address_of(account)),
+            Errors::invalid_state(ERR_FARMING_INIT_REPEATE));
 
         let now_seconds = Timestamp::now_seconds();
         move_to(account, FarmingAsset<PoolType, AssetT> {
@@ -140,7 +184,8 @@ module YieldFarming {
         account: &signer,
         broker: address,
         asset: AssetT) acquires FarmingAsset {
-        assert(!exists_stake_at_address<PoolType, AssetT>(Signer::address_of(account)), ERR_FARMING_STAKE_EXISTS);
+        assert(!exists_stake_at_address<PoolType, AssetT>(Signer::address_of(account)),
+            Errors::invalid_state(ERR_FARMING_STAKE_EXISTS));
 
         let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
 
@@ -159,8 +204,12 @@ module YieldFarming {
         account: &signer,
         broker: address,
         asset_wrapper: AssetWrapper<PoolType, AssetT>) acquires FarmingAsset, Stake {
-        assert(exists_stake_at_address<PoolType, AssetT>(Signer::address_of(account)), ERR_FARMING_STAKE_NOT_EXISTS);
-        inner_stake<PoolType, GovTokenT, AssetT>(Signer::address_of(account), broker, asset_wrapper);
+
+        let account_address = Signer::address_of(account);
+        assert(exists_stake_at_address<PoolType, AssetT>(
+            account_address),
+            Errors::invalid_state(ERR_FARMING_STAKE_NOT_EXISTS));
+        inner_stake<PoolType, GovTokenT, AssetT>(account_address, broker, asset_wrapper);
     }
 
     public fun stake_with_cap<PoolType: store,
@@ -187,7 +236,7 @@ module YieldFarming {
         let gov_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
 
         // Check locking time
-        assert(gov_asset.start_time <= Timestamp::now_seconds(), ERR_FARMING_NOT_STILL_FREEZE);
+        assert(gov_asset.start_time <= Timestamp::now_seconds(), Errors::invalid_state(ERR_FARMING_NOT_STILL_FREEZE));
 
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
 
@@ -230,8 +279,8 @@ module YieldFarming {
         // Perform settlement
         settle_with_param<PoolType, GovTokenT, AssetT>(gov_asset, stake);
 
-        assert(stake.gain > 0, ERR_FARMING_HAVERST_NO_GAIN);
-        assert(stake.gain - amount > 0, ERR_FARMING_WITHDRAW_OVERFLOW);
+        assert(stake.gain > 0, Errors::limit_exceeded(ERR_FARMING_HAVERST_NO_GAIN));
+        assert(stake.gain >= amount, Errors::limit_exceeded(ERR_FARMING_WITHDRAW_OVERFLOW));
 
         // Withdraw goverment token
         if (amount > 0) {
@@ -294,9 +343,13 @@ module YieldFarming {
                                        asset_total_weight: u128,
                                        last_update_timestamp: u64,
                                        release_per_second: u128): u128 {
-        assert(asset_total_weight > 0, ERR_FARMING_TOTAL_WEIGHT_IS_ZERO);
+        assert(asset_total_weight > 0, Errors::invalid_argument(ERR_FARMING_TOTAL_WEIGHT_IS_ZERO));
         let time_period = Timestamp::now_seconds() - last_update_timestamp;
-        harvest_index + (release_per_second * (time_period as u128)) / asset_total_weight
+
+        let numr = (release_per_second * (time_period as u128));
+        let denom = asset_total_weight;
+        let added_index = truncate(exp(numr, denom));
+        harvest_index + added_index
     }
 
     /// This function will return a gain index

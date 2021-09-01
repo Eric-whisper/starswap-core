@@ -162,23 +162,22 @@ script {
 }
 // check: EXECUTED
 
-
-// //! new-transaction
-// //! sender: joe
-// //address joe = {{joe}};
-// address alice = {{alice}};
-// script {
-//     use alice::TokenMock;
-//     use 0x1::Account;
-//     use 0x1::Token;
-//     use 0x1::Signer;
-
-//     fun init(account: signer) {
-//         let token = TokenMock::harvest(&account);
-//         Account::do_accept_token<TokenMock::Usdx>(&account);
-
-//         let token_balance = Token::value<TokenMock::Usdx>(&token);
-//         assert(token_balance == 10000, 10000);
-//         Account::deposit<TokenMock::Usdx>(Signer::address_of(&account), token);
-//     }
-// }
+////! new-transaction
+////! sender: joe
+////address joe = {{joe}};
+//address alice = {{alice}};
+//script {
+//    use alice::TokenMock;
+//    use 0x1::Account;
+//    use 0x1::Token;
+//    use 0x1::Signer;
+//
+//    fun init(account: signer) {
+//        let token = TokenMock::harvest(&account);
+//        Account::do_accept_token<TokenMock::Usdx>(&account);
+//
+//        let token_balance = Token::value<TokenMock::Usdx>(&token);
+//        assert(token_balance == 10000, 10000);
+//        Account::deposit<TokenMock::Usdx>(Signer::address_of(&account), token);
+//    }
+//}
