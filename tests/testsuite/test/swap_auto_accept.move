@@ -8,7 +8,7 @@
 address alice = {{alice}};
 module alice::TokenMock {
     // mock Usdx token
-    struct Usdx has copy, drop, store { }
+    struct Usdx has copy, drop, store {}
 }
 
 //! new-transaction
