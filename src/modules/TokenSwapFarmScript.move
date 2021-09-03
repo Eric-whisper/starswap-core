@@ -32,13 +32,13 @@ module TokenSwapFarmScript {
     }
 
     /// Unstake liquidity token
-    public(script) fun unstake<TokenX: store, TokenY: store>(account: signer, amount: u128) {
+    public(script) fun unstake<TokenX: store, TokenY: store>(account: signer) {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
         if (order == 1) {
-            TokenSwapFarm::unstake<TokenX, TokenY>(&account, amount);
+            TokenSwapFarm::unstake<TokenX, TokenY>(&account);
         } else {
-            TokenSwapFarm::unstake<TokenY, TokenX>(&account, amount);
+            TokenSwapFarm::unstake<TokenY, TokenX>(&account);
         }
     }
 

@@ -11,21 +11,9 @@ module TokenSwapGovScript {
         TokenSwapGov::genesis_initialize(&account);
     }
 
-    /// Called by user, the user claim pool have stake asset
-    public(script) fun claim<PoolType: store>(account: signer) {
-        TokenSwapGov::claim<PoolType>(&account);
-    }
-
-    /// Called by admin, increase or decrease linear asset value
-    public fun admin_add_linear_asset<PoolType: store>(account: signer,
-                                                       beneficiary: address,
-                                                       amount: u128){
-        TokenSwapGov::admin_add_linear_asset<PoolType>(&account, beneficiary, amount);
-    }
-
     /// Harverst TBD by given pool type, call ed by user
-    public fun harvest<PoolType: store>(account: signer) {
-        TokenSwapGov::harvest<PoolType>(&account);
+    public(script) fun dispatch<PoolType: store>(account: signer, acceptor: address, amount: u128) {
+        TokenSwapGov::dispatch<PoolType>(&account, acceptor, amount);
     }
 }
 }
