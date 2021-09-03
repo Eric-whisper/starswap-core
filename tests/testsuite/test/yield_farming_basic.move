@@ -141,6 +141,7 @@ script {
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Signer;
+    use 0x1::Debug;
 
     /// 1. First stake, check whether first rewards has been executed.
     fun main(account: signer) {
@@ -149,6 +150,7 @@ script {
         
         let token = YieldFarmingWarpper::harvest(&account);
         let _amount = Token::value<Usdx>(&token);
+        Debug::print(&_amount);
         // assert(amount == 10000000000, 10002);
         Account::deposit<Usdx>(Signer::address_of(&account), token);
     }
@@ -159,7 +161,6 @@ script {
 //! author: genesis
 //! block-number: 2
 //! block-time: 86420000
-
 
 //! new-transaction
 //! sender: cindy
@@ -195,6 +196,7 @@ script {
         let amount00 = YieldFarmingWarpper::query_gov_token_amount(&account);
         Debug::print(&amount00);
         // assert(amount00 == 0, 10004);
+        assert(amount00 > 0, 10004);
     }
 }
 // check: EXECUTED
@@ -215,7 +217,7 @@ script {
     use 0x1::Signer;
     use 0x1::Debug;
 
-    /// 4. Cindy harvest after 30 seconds, checking whether has rewards.
+    /// 4. Cindy harvest after 40 seconds, checking whether has rewards.
     fun init(account: signer) {
         let amount00 = YieldFarmingWarpper::query_gov_token_amount(&account);
         Debug::print(&amount00);
@@ -223,56 +225,10 @@ script {
         let token = YieldFarmingWarpper::harvest(&account);
         let amount1 = Token::value<Usdx>(&token);
         Debug::print(&amount1);
+        assert(amount1 > 0, 10005);
         // assert(amount1 == 20000000000, 10004);
         Account::deposit<Usdx>(Signer::address_of(&account), token);
     }
 }
 // check: EXECUTED
 
-
-// //! new-transaction
-// //! sender: joe
-// //address joe = {{joe}};
-// address alice = {{alice}};
-// script {
-//    use alice::YieldFarmingWarpper;
-//    use 0x1::Debug;
-
-//    fun init(account: signer) {
-//         let _amount = YieldFarmingWarpper::query_gov_token_amount(&account);
-//         Debug::print(&_amount);
-//         let (_asset, _token) = YieldFarmingWarpper::unstake(&account);
-//         Debug::print(&_asset);
-//         Debug::print(&_token);
-//         assert(_asset > 0, 1001);
-//         assert(_token > 0, 1002);
-//         YieldFarmingWarpper::stake(&account, 100000000);
-//    }
-// }
-
-// //! block-prologue
-// //! author: genesis
-// //! block-number: 4
-// //! block-time: 86440000
-
-// //! new-transaction
-// //! sender: joe
-// //address joe = {{joe}};
-// address alice = {{alice}};
-// script {
-//    use alice::YieldFarmingWarpper::{Usdx, Self};
-//    use 0x1::Debug;
-//    use 0x1::Token;
-//    use 0x1::Signer;
-//    use 0x1::Account;
-
-//    fun init(account: signer) {
-//         let token = YieldFarmingWarpper::harvest(&account);
-//         let _amount = Token::value<Usdx>(&token);
-//         assert(_amount > 0, 1003);
-//         Account::deposit<Usdx>(Signer::address_of(&account), token);
-//         Debug::print(&_amount);
-//    }
-// }
-
-// // check: EXECUTED
