@@ -8,13 +8,10 @@ module TokenSwapFarm {
     use 0x1::Signer;
     use 0x1::Token;
     use 0x1::Account;
-    //use 0x1::GovernanceDaoProposal;
     use 0x81144d60492982a45ba93fba47cae988::TBD;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwap::LiquidityToken;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
-
-    const ERROR_UNSTAKE_INSUFFICIENT: u64 = 1001;
 
     struct FarmParameterModfiyCapability<PoolType, AssetT> has key, store {
         cap: YieldFarming::ParameterModifyCapability<PoolType, AssetT>
@@ -30,11 +27,13 @@ module TokenSwapFarm {
         // To determine how many amount release in every period
         let cap = YieldFarming::initialize_asset<
             TokenSwapGov::PoolTypeLiquidityMint,
-            LiquidityToken<TokenX, TokenY>>(account, release_per_seconds, 0);
+            Token::Token<LiquidityToken<TokenX, TokenY>>
+        >(account, release_per_seconds, 0);
 
         move_to(account, FarmParameterModfiyCapability<
             TokenSwapGov::PoolTypeLiquidityMint,
-            LiquidityToken<TokenX, TokenY>> {
+            Token::Token<LiquidityToken<TokenX, TokenY>>
+        > {
             cap
         });
 //        // TODO (BobOng): Add to DAO
@@ -46,7 +45,6 @@ module TokenSwapFarm {
     /// Stake liquidity Token pair
     public fun stake<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
         let lp_token = TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, amount);
-
         YieldFarming::stake<
             TokenSwapGov::PoolTypeLiquidityMint,
             TBD::TBD,
@@ -77,7 +75,12 @@ module TokenSwapFarm {
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>
         >(account, TBD::token_address(), amount);
-        Account::deposit<TBD::TBD>(Signer::address_of(account), token);
+
+        let account_addr = Signer::address_of(account);
+        if (!Account::is_accept_token<TBD::TBD>(account_addr)) {
+            Account::do_accept_token<TBD::TBD>(account);
+        };
+        Account::deposit<TBD::TBD>(account_addr, token);
     }
 
     /// Return calculated APY
@@ -95,6 +98,13 @@ module TokenSwapFarm {
             TokenSwapGov::PoolTypeLiquidityMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>
         >(TBD::token_address())
+    }
+
+    public fun query_stake<TokenX: store, TokenY: store>(account: &signer): u128 {
+        YieldFarming::query_stake<
+            TokenSwapGov::PoolTypeLiquidityMint,
+            Token::Token<LiquidityToken<TokenX, TokenY>>
+        >(account)
     }
 
     /// Return calculated APY

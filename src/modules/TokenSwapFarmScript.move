@@ -11,56 +11,73 @@ module TokenSwapFarmScript {
 
     /// Called by admin account
     public(script) fun add_farm_pool<TokenX: store, TokenY: store>(account: signer, release_per_second: u128) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::add_farm<TokenX, TokenY>(&account, release_per_second);
-        } else {
-            TokenSwapFarm::add_farm<TokenY, TokenX>(&account, release_per_second);
-        };
+        add_farm_pool_by_router<TokenX, TokenY>(&account, release_per_second);
     }
 
     /// Stake liquidity token
     public(script) fun stake<TokenX: store, TokenY: store>(account: signer, amount: u128) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::stake<TokenX, TokenY>(&account, amount);
-        } else {
-            TokenSwapFarm::stake<TokenY, TokenX>(&account, amount);
-        }
+        stake_by_router<TokenX, TokenY>(&account, amount);
     }
 
     /// Unstake liquidity token
     public(script) fun unstake<TokenX: store, TokenY: store>(account: signer) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::unstake<TokenX, TokenY>(&account);
-        } else {
-            TokenSwapFarm::unstake<TokenY, TokenX>(&account);
-        }
+        unstake_by_router<TokenX, TokenY>(&account);
     }
 
     /// Havest governance token from pool
     public(script) fun harvest<TokenX: store, TokenY: store>(account: signer, amount: u128) {
+        harvest_by_router<TokenX, TokenY>(&account, amount);
+    }
+
+    public fun add_farm_pool_by_router<TokenX: store, TokenY: store>(account: &signer, release_per_second: u128) {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
         if (order == 1) {
-            TokenSwapFarm::harvest<TokenX, TokenY>(&account, amount);
+            TokenSwapFarm::add_farm<TokenX, TokenY>(account, release_per_second);
         } else {
-            TokenSwapFarm::harvest<TokenY, TokenX>(&account, amount);
+            TokenSwapFarm::add_farm<TokenY, TokenX>(account, release_per_second);
+        };
+    }
+
+    public fun stake_by_router<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::stake<TokenX, TokenY>(account, amount);
+        } else {
+            TokenSwapFarm::stake<TokenY, TokenX>(account, amount);
+        };
+    }
+
+    public fun unstake_by_router<TokenX: store, TokenY: store>(account: &signer) {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::unstake<TokenX, TokenY>(account);
+        } else {
+            TokenSwapFarm::unstake<TokenY, TokenX>(account);
+        }
+    }
+
+    /// Havest governance token from pool
+    public fun harvest_by_router<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::harvest<TokenX, TokenY>(account, amount);
+        } else {
+            TokenSwapFarm::harvest<TokenY, TokenX>(account, amount);
         }
     }
 
     /// Get gain count
-    public fun lookup_gain<TokenX: store, TokenY: store>(account: signer) : u128 {
+    public fun lookup_gain<TokenX: store, TokenY: store>(account: &signer) : u128 {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
         if (order == 1) {
-            TokenSwapFarm::lookup_gain<TokenX, TokenY>(&account)
+            TokenSwapFarm::lookup_gain<TokenX, TokenY>(account)
         } else {
-            TokenSwapFarm::lookup_gain<TokenY, TokenX>(&account)
+            TokenSwapFarm::lookup_gain<TokenY, TokenX>(account)
         }
     }
 
@@ -72,6 +89,17 @@ module TokenSwapFarmScript {
             TokenSwapFarm::query_total_stake<TokenX, TokenY>()
         } else {
             TokenSwapFarm::query_total_stake<TokenY, TokenX>()
+        }
+    }
+
+    /// Query all stake amount
+    public fun query_stake<TokenX: store, TokenY: store>(account: &signer) : u128 {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::query_stake<TokenX, TokenY>(account)
+        } else {
+            TokenSwapFarm::query_stake<TokenY, TokenX>(account)
         }
     }
 
