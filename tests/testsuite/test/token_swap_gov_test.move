@@ -82,51 +82,6 @@ script {
 }
 // check: EXECUTED
 
-//! new-transaction
-//! sender: alice
-address admin = {{admin}};
-address alice = {{alice}};
-script {
-    //use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov::{PoolTypeTeam, Self};
-
-    fun main(signer: signer) {
-        TokenSwapGov::claim<PoolTypeTeam>(&signer);
-    }
-}
-// check: EXECUTED
-
-
-//! new-transaction
-//! sender: bob
-address admin = {{admin}};
-address bob = {{bob}};
-script {
-    //use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov::{PoolTypeTeam, Self};
-
-    fun main(signer: signer) {
-        TokenSwapGov::claim<PoolTypeTeam>(&signer);
-    }
-}
-// check: EXECUTED
-
-
-//! new-transaction
-//! sender: admin
-address admin = {{admin}};
-address alice = {{alice}};
-address bob = {{bob}};
-script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov::{PoolTypeTeam, Self};
-
-    fun main(signer: signer) {
-        TokenSwapGov::admin_add_linear_asset<PoolTypeTeam>(&signer, @alice, 500);
-        TokenSwapGov::admin_add_linear_asset<PoolTypeTeam>(&signer, @bob, 500);
-    }
-}
-// check: EXECUTED
-
 //! block-prologue
 //! author: genesis
 //! block-number: 2
@@ -134,12 +89,43 @@ script {
 
 //! new-transaction
 //! sender: alice
-address admin = {{admin}};
+address alice = {{alice}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov::{PoolTypeTeam, Self};
+    use 0x81144d60492982a45ba93fba47cae988::TBD;
+    use 0x1::Account;
 
     fun main(signer: signer) {
-        TokenSwapGov::harvest<PoolTypeTeam>(&signer);
+        Account::do_accept_token<TBD::TBD>(&signer);
+    }
+}
+
+//! new-transaction
+//! sender: admin
+address admin = {{admin}};
+address alice = {{alice}};
+script {
+    use 0x1::Account;
+    use 0x81144d60492982a45ba93fba47cae988::TBD;
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov::{
+        PoolTypeTeam,
+        PoolTypeInvestor,
+        PoolTypeTechMaintenance,
+        PoolTypeMarket,
+        PoolTypeStockManagement,
+        PoolTypeDaoCrosshain,
+        Self
+    };
+
+    fun main(signer: signer) {
+        TokenSwapGov::dispatch<PoolTypeTeam>(&signer, @alice, 100000000);
+        TokenSwapGov::dispatch<PoolTypeInvestor>(&signer, @alice, 100000000);
+        TokenSwapGov::dispatch<PoolTypeTechMaintenance>(&signer, @alice, 100000000);
+        TokenSwapGov::dispatch<PoolTypeMarket>(&signer, @alice, 100000000);
+        TokenSwapGov::dispatch<PoolTypeStockManagement>(&signer, @alice, 100000000);
+        TokenSwapGov::dispatch<PoolTypeDaoCrosshain>(&signer, @alice, 100000000);
+
+        let balance = Account::balance<TBD::TBD>(@alice);
+        assert(balance == 600000000, 1003);
     }
 }
 // check: EXECUTED

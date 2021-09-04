@@ -63,7 +63,7 @@ module TokenSwapGov {
 
         // Release 10% for team in 2 years
         let team_total = 10000000 * (scaling_factor as u128);
-        move_to(account, GovTreasury<PoolTypeLiquidityMint> {
+        move_to(account, GovTreasury<PoolTypeTeam> {
             treasury: Account::withdraw<TBD::TBD>(account, team_total),
         });
 
