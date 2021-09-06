@@ -24,6 +24,7 @@ module TokenSwapGov {
     /// Initial as genesis that will create pool list by Starswap Ecnomic Model list
     public fun genesis_initialize(account: &signer) {
         TBD::assert_genesis_address(account);
+        TBD::init(account);
 
         let precision = TBD::precision();
         let scaling_factor = Math::pow(10, (precision as u64));

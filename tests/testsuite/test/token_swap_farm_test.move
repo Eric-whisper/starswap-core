@@ -73,13 +73,11 @@ script {
 //! sender: admin
 address admin = {{admin}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarmScript;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
-        TBD::init(&signer);
         TokenSwapGov::genesis_initialize(&signer);
         TokenSwapFarmScript::add_farm_pool_by_router<BTC, ETH>(&signer, 100000000);
     }

@@ -9,11 +9,9 @@
 //! sender: admin
 address admin = {{admin}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
     use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
 
     fun main(signer: signer) {
-        TBD::init(&signer);
         TokenSwapGov::genesis_initialize(&signer);
     }
 }
