@@ -21,7 +21,7 @@ script {
 
 //! block-prologue
 //! author: genesis
-//! block-number: 2
+//! block-number: 1
 //! block-time: 86410000
 
 //! new-transaction
@@ -43,14 +43,14 @@ address alice = {{alice}};
 script {
     use 0x1::Account;
     use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov::{
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGovPoolType::{
         PoolTypeTeam,
         PoolTypeInvestor,
         PoolTypeTechMaintenance,
         PoolTypeMarket,
         PoolTypeStockManagement,
         PoolTypeDaoCrosshain,
-        Self
     };
 
     fun main(signer: signer) {

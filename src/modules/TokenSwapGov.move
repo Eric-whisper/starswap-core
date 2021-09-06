@@ -4,27 +4,13 @@
 // TODO: replace the address with admin address
 address 0x81144d60492982a45ba93fba47cae988 {
 module TokenSwapGov {
-    use 0x1::YieldFarming;
     use 0x1::Token;
     use 0x1::Account;
     use 0x1::Math;
     use 0x1::Signer;
     use 0x81144d60492982a45ba93fba47cae988::TBD;
-
-    struct PoolTypeLiquidityMint has key, store {}
-
-    struct PoolTypeTeam has key, store {}
-
-    struct PoolTypeInvestor has key, store {}
-
-    struct PoolTypeTechMaintenance has key, store {}
-
-    struct PoolTypeMarket has key, store {}
-
-    struct PoolTypeStockManagement has key, store {}
-
-    struct PoolTypeDaoCrosshain has key, store {}
-
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarm;
+    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGovPoolType::{PoolTypeTeam, PoolTypeInvestor, PoolTypeTechMaintenance, PoolTypeMarket, PoolTypeStockManagement, PoolTypeDaoCrosshain};
 
     struct GovCapability has key, store {
         mint_cap: Token::MintCapability<TBD::TBD>,
@@ -33,10 +19,6 @@ module TokenSwapGov {
 
     struct GovTreasury<PoolType> has key, store {
         treasury: Token::Token<TBD::TBD>
-    }
-
-    struct GovModfiyParamCapability<PoolType, AssetT> has key, store {
-        cap: YieldFarming::ParameterModifyCapability<PoolType, AssetT>,
     }
 
     /// Initial as genesis that will create pool list by Starswap Ecnomic Model list
@@ -59,7 +41,7 @@ module TokenSwapGov {
         // Release 30% for liquidity token stake
         let lptoken_stake_total = 15000000 * (scaling_factor as u128);
         let lptoken_stake_total_token = Account::withdraw<TBD::TBD>(account, lptoken_stake_total);
-        YieldFarming::initialize<PoolTypeLiquidityMint, TBD::TBD>(account, lptoken_stake_total_token);
+        TokenSwapFarm::initialize_farm_pool(account, lptoken_stake_total_token);
 
         // Release 10% for team in 2 years
         let team_total = 10000000 * (scaling_factor as u128);
