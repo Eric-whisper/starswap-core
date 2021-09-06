@@ -46,7 +46,6 @@ module YieldFarming {
         gain: u128,
     }
 
-
     //////////////////////////////////////////////////////////////////////
     // Exponential functions
 
@@ -129,9 +128,11 @@ module YieldFarming {
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
         let now_seconds = Timestamp::now_seconds();
         
-        update_index<PoolType, AssetT>(farming_asset, now_seconds);
+        let new_index = calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset, now_seconds);
 
         farming_asset.release_per_second = release_per_second;
+        farming_asset.harvest_index = new_index;
+        farming_asset.last_update_timestamp = now_seconds;
     }
 
     /// Call by stake user, staking amount of asset in order to get yield farming token
@@ -141,9 +142,10 @@ module YieldFarming {
         asset: AssetT,
         asset_weight: u128) acquires FarmingAsset {
 
+        // Debug::print(account);
         let account_address = Signer::address_of(account);
-        assert(exists_stake_at_address<PoolType, AssetT>(account_address), 
-            Errors::invalid_state(ERR_FARMING_STAKE_NOT_EXISTS));
+        assert(!exists_stake_at_address<PoolType, AssetT>(account_address), 
+            Errors::invalid_state(ERR_FARMING_STAKE_EXISTS));
 
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
         let now_seconds = Timestamp::now_seconds();
@@ -153,26 +155,28 @@ module YieldFarming {
 
         let time_period = now_seconds - farming_asset.last_update_timestamp;
 
-        if (farming_asset.asset_total_weight <= 0) {
+        if (farming_asset.asset_total_weight <= 0) { // Stake as first user
+            let gain = farming_asset.release_per_second * (time_period as u128);
             move_to(account, Stake<PoolType, AssetT>{
                 asset,
                 asset_weight,
                 last_harvest_index: 0,
-                gain: farming_asset.release_per_second * (time_period as u128),
+                gain,
             });
             farming_asset.harvest_index = 0;
             farming_asset.asset_total_weight = asset_weight;
-            farming_asset.last_update_timestamp = now_seconds;
         } else {
-            let new_harvest_index = update_index<PoolType, AssetT>(farming_asset, now_seconds);
+            let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset, now_seconds);
             move_to(account, Stake<PoolType, AssetT>{
                 asset,
                 asset_weight,
                 last_harvest_index: new_harvest_index,
-                gain: farming_asset.release_per_second * (time_period as u128),
+                gain: 0,
             });
-            farming_asset.asset_total_weight = asset_weight;
+            farming_asset.asset_total_weight = farming_asset.asset_total_weight + asset_weight;
+            farming_asset.harvest_index = new_harvest_index;
         };
+        farming_asset.last_update_timestamp = now_seconds;
     }
 
     /// Unstake asset from farming pool
@@ -184,15 +188,21 @@ module YieldFarming {
         let Stake<PoolType, AssetT> {last_harvest_index, asset_weight, asset, gain} = 
             move_from<Stake<PoolType, AssetT>>(Signer::address_of(account));
 
-        let period_gain = calculate_withdraw_amount(farming_asset.harvest_index, last_harvest_index, asset_weight);
+        let now_seconds = Timestamp::now_seconds();
+        let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset, now_seconds);
+
+        let period_gain = calculate_withdraw_amount(new_harvest_index, last_harvest_index, asset_weight);
         let total_gain = gain + period_gain;
         let withdraw_token = Token::withdraw<RewardTokenT>(&mut farming.treasury_token, total_gain);
-        
-        // Dont update harvest index that because the `Stake` object has droped.
-        update_index<PoolType, AssetT>(farming_asset, Timestamp::now_seconds());
 
-        assert(farming_asset.asset_total_weight > asset_weight, Errors::invalid_state(ERR_FARMING_NOT_ENOUGH_ASSET));
+        // Dont update harvest index that because the `Stake` object has droped.
+        // let new_index = calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset, now_seconds);
+        assert(farming_asset.asset_total_weight >= asset_weight, Errors::invalid_state(ERR_FARMING_NOT_ENOUGH_ASSET));
+
+        // Update farm asset
         farming_asset.asset_total_weight = farming_asset.asset_total_weight - asset_weight;
+        farming_asset.harvest_index = new_harvest_index;
+        farming_asset.last_update_timestamp = now_seconds;
 
         (asset, withdraw_token)
     }
@@ -209,13 +219,17 @@ module YieldFarming {
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
 
+        let now_seconds = Timestamp::now_seconds();
+        let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset, now_seconds);
+
         let period_gain = calculate_withdraw_amount(
-            farming_asset.harvest_index, 
+            new_harvest_index,
             stake.last_harvest_index, 
-            stake.asset_weight);
+            stake.asset_weight
+        );
 
         let total_gain = stake.gain + period_gain;
-        assert(total_gain > 0, Errors::limit_exceeded(ERR_FARMING_HAVERST_NO_GAIN));
+        //assert(total_gain > 0, Errors::limit_exceeded(ERR_FARMING_HAVERST_NO_GAIN));
         assert(total_gain >= amount, Errors::limit_exceeded(ERR_FARMING_BALANCE_EXCEEDED));
 
         let withdraw_amount = if (amount <= 0) {
@@ -225,8 +239,11 @@ module YieldFarming {
         };
         
         let withdraw_token = Token::withdraw<RewardTokenT>(&mut farming.treasury_token, withdraw_amount);
-        stake.gain = stake.gain - withdraw_amount;
-        stake.last_harvest_index = update_index<PoolType, AssetT>(farming_asset, Timestamp::now_seconds());
+        stake.gain = total_gain - withdraw_amount;
+        stake.last_harvest_index = new_harvest_index;
+
+        farming_asset.harvest_index = new_harvest_index;
+        farming_asset.last_update_timestamp = now_seconds;
 
         withdraw_token
     }
@@ -234,16 +251,28 @@ module YieldFarming {
     /// The user can quering all yield farming amount in any time and scene
     public fun query_gov_token_amount<PoolType: store,
                                       RewardTokenT: store,
-                                      AssetT : store>(account: &signer, broker: address): u128 acquires FarmingAsset, Stake {
+                                      AssetT: store>(account: &signer, broker: address): u128 acquires FarmingAsset, Stake {
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
+        let now_seconds = Timestamp::now_seconds();
+
+        let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(
+            farming_asset,
+            now_seconds
+        );
 
         let new_gain = calculate_withdraw_amount(
-            farming_asset.harvest_index, stake.last_harvest_index, stake.asset_weight);
-        let new_index = update_index<PoolType, AssetT>(farming_asset, Timestamp::now_seconds());
-        
+            new_harvest_index,
+            stake.last_harvest_index,
+            stake.asset_weight
+        );
+
         stake.gain = stake.gain + new_gain;
-        stake.last_harvest_index = new_index;
+        stake.last_harvest_index = new_harvest_index;
+
+        farming_asset.harvest_index = new_harvest_index;
+        farming_asset.last_update_timestamp = now_seconds;
+
         stake.gain
     }
     
@@ -254,23 +283,42 @@ module YieldFarming {
         farming_asset.asset_total_weight
     }
 
+    /// Query stake weight from user staking objects.
+    public fun query_stake<PoolType: store,
+                           AssetT: store>(account: &signer): u128 acquires Stake {
+        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
+        stake.asset_weight
+    }
+
     /// Update farming asset
-    fun update_index<PoolType, AssetT>(farming_asset: &mut FarmingAsset<PoolType, AssetT>, now_seconds: u64) : u128 {
+    fun calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset: &FarmingAsset<PoolType, AssetT>, now_seconds: u64) : u128 {
         // Recalculate harvest index
         if (farming_asset.asset_total_weight <= 0) {
-            assert(farming_asset.last_update_timestamp >= now_seconds, Errors::invalid_argument(ERR_FARMING_TIMESTAMP_INVALID));
-            let time_period = now_seconds - farming_asset.last_update_timestamp;
-            farming_asset.harvest_index = farming_asset.harvest_index + (farming_asset.release_per_second * ((time_period as u128)));
+            calculate_harvest_index_weight_zero(
+                farming_asset.harvest_index,
+                farming_asset.last_update_timestamp,
+                now_seconds,
+                farming_asset.release_per_second
+            )
         } else {
-            farming_asset.harvest_index = calculate_harvest_index(
+            calculate_harvest_index(
                 farming_asset.harvest_index,
                 farming_asset.asset_total_weight,
                 farming_asset.last_update_timestamp,
                 now_seconds,
-                farming_asset.release_per_second);
-        };
-        farming_asset.last_update_timestamp = now_seconds;
-        farming_asset.harvest_index
+                farming_asset.release_per_second
+            )
+        }
+    }
+
+    /// There is calculating from harvest index and global parameters without asset_total_weight
+    public fun calculate_harvest_index_weight_zero(harvest_index: u128,
+                                                   last_update_timestamp: u64,
+                                                   now_seconds: u64,
+                                                   release_per_second: u128): u128 {
+        assert(last_update_timestamp <= now_seconds, Errors::invalid_argument(ERR_FARMING_TIMESTAMP_INVALID));
+        let time_period = now_seconds - last_update_timestamp;
+        harvest_index + (release_per_second * ((time_period as u128)))
     }
 
     /// There is calculating from harvest index and global parameters
@@ -280,9 +328,9 @@ module YieldFarming {
                                        now_seconds: u64,
                                        release_per_second: u128): u128 {
         assert(asset_total_weight > 0, Errors::invalid_argument(ERR_FARMING_TOTAL_WEIGHT_IS_ZERO));
-        assert(last_update_timestamp >= now_seconds, Errors::invalid_argument(ERR_FARMING_TIMESTAMP_INVALID));
+        assert(last_update_timestamp <= now_seconds, Errors::invalid_argument(ERR_FARMING_TIMESTAMP_INVALID));
 
-        let time_period = last_update_timestamp - now_seconds;
+        let time_period = now_seconds - last_update_timestamp;
         let numr = (release_per_second * (time_period as u128));
         let denom = asset_total_weight;
         let added_index = truncate(exp(numr, denom));

@@ -2,44 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: replace the address with admin address
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module TokenSwapGov {
-    use 0x1::YieldFarming;
     use 0x1::Token;
     use 0x1::Account;
     use 0x1::Math;
     use 0x1::Signer;
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x1::Debug;
-
-    const ERR_USER_NOT_CLAIM : u64 = 40001;
-
-    struct PoolTypeLPTokenMint has key, store {}
-
-    struct PoolTypeTeam has key, store {}
-
-    struct PoolTypeInvestor has key, store {}
-
-    struct PoolTypeTechMaintenance has key, store {}
-
-    struct PoolTypeMarket has key, store {}
-
-    struct LinearReleaseAsset has key, store {
-        value: u128,
-    }
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarm;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGovPoolType::{PoolTypeTeam, PoolTypeInvestor, PoolTypeTechMaintenance, PoolTypeMarket, PoolTypeStockManagement, PoolTypeDaoCrosshain};
 
     struct GovCapability has key, store {
         mint_cap: Token::MintCapability<TBD::TBD>,
         burn_cap: Token::BurnCapability<TBD::TBD>,
     }
 
-    struct GovModfiyParamCapability<PoolType, AssetT> has key, store {
-        cap: YieldFarming::ParameterModifyCapability<PoolType, AssetT>,
+    struct GovTreasury<PoolType> has key, store {
+        treasury: Token::Token<TBD::TBD>
     }
 
     /// Initial as genesis that will create pool list by Starswap Ecnomic Model list
     public fun genesis_initialize(account: &signer) {
         TBD::assert_genesis_address(account);
+        TBD::init(account);
 
         let precision = TBD::precision();
         let scaling_factor = Math::pow(10, (precision as u64));
@@ -57,95 +42,50 @@ module TokenSwapGov {
         // Release 30% for liquidity token stake
         let lptoken_stake_total = 15000000 * (scaling_factor as u128);
         let lptoken_stake_total_token = Account::withdraw<TBD::TBD>(account, lptoken_stake_total);
-        YieldFarming::initialize<PoolTypeLPTokenMint, TBD::TBD>(account, lptoken_stake_total_token);
-
-        // 10000000/(2*365*24*60*60) = 0.1585489599
-        let release_per_seconds_in_2y_10p = 1585489599;
-        // 2000000/(1*365*24*60*60) = 0.06341958397
-        let relese_per_seconds_in_1y_2p = 63419583;
+        TokenSwapFarm::initialize_farm_pool(account, lptoken_stake_total_token);
 
         // Release 10% for team in 2 years
         let team_total = 10000000 * (scaling_factor as u128);
-        let team_total_token = Account::withdraw<TBD::TBD>(account, team_total);
-        Debug::print(&team_total);
-        YieldFarming::initialize<PoolTypeTeam, TBD::TBD>(account, team_total_token);
-        let team_pool_cap = YieldFarming::initialize_asset<
-            PoolTypeTeam,
-            LinearReleaseAsset>(account, release_per_seconds_in_2y_10p, 15552000);
-        move_to(account, GovModfiyParamCapability<PoolTypeTeam, LinearReleaseAsset> {
-            cap: team_pool_cap,
+        move_to(account, GovTreasury<PoolTypeTeam> {
+            treasury: Account::withdraw<TBD::TBD>(account, team_total),
         });
 
         // Release 10% for investor in 2 years
         let investor_total = 10000000 * (scaling_factor as u128);
-        let investor_total_token = Account::withdraw<TBD::TBD>(account, investor_total);
-        YieldFarming::initialize<PoolTypeInvestor, TBD::TBD>(account, investor_total_token);
-        let invest_pool_cap = YieldFarming::initialize_asset<
-            PoolTypeInvestor,
-            LinearReleaseAsset>(account, release_per_seconds_in_2y_10p, 0);
-        move_to(account, GovModfiyParamCapability<PoolTypeInvestor, LinearReleaseAsset> {
-            cap: invest_pool_cap,
+        move_to(account, GovTreasury<PoolTypeInvestor> {
+            treasury: Account::withdraw<TBD::TBD>(account, investor_total),
         });
 
         // Release technical maintenance 2% value management in 1 year
         let maintenance_total = 2000000 * (scaling_factor as u128);
-        let maintenance_total_token = Account::withdraw<TBD::TBD>(account, maintenance_total);
-        YieldFarming::initialize<PoolTypeTechMaintenance, TBD::TBD>(account, maintenance_total_token);
-        let maintenance_pool_cap = YieldFarming::initialize_asset<
-            PoolTypeTechMaintenance,
-            LinearReleaseAsset>(account, relese_per_seconds_in_1y_2p, 0);
-        move_to(account, GovModfiyParamCapability<PoolTypeTechMaintenance, LinearReleaseAsset> {
-            cap: maintenance_pool_cap,
+        move_to(account, GovTreasury<PoolTypeTechMaintenance> {
+            treasury: Account::withdraw<TBD::TBD>(account, maintenance_total),
         });
 
-        // Release market 5% value management in 1 year
+        // Release market management 5% value management in 1 year
         let market_management = 5000000 * (scaling_factor as u128);
-        let market_management_token = Account::withdraw<TBD::TBD>(account, market_management);
-        YieldFarming::initialize<PoolTypeMarket, TBD::TBD>(account, market_management_token);
-        let market_pool_cap = YieldFarming::initialize_asset<
-            PoolTypeMarket,
-            LinearReleaseAsset>(account, relese_per_seconds_in_1y_2p, 0);
-        move_to(account, GovModfiyParamCapability<PoolTypeMarket, LinearReleaseAsset> {
-            cap: market_pool_cap,
+        move_to(account, GovTreasury<PoolTypeMarket> {
+            treasury: Account::withdraw<TBD::TBD>(account, market_management),
         });
 
-        // TODO(BobOng): to dispatch 1. 1% market value 2. 42% DAO and cross chain pool
+        // Release 1% for stock market value
+        let stock_management = 1000000 * (scaling_factor as u128);
+        move_to(account, GovTreasury<PoolTypeStockManagement> {
+            treasury: Account::withdraw<TBD::TBD>(account, stock_management),
+        });
+
+        // Release 42% for DAO and cross chain .
+        let dao_and_crosschain_total = 42000000 * (scaling_factor as u128);
+        move_to(account, GovTreasury<PoolTypeDaoCrosshain> {
+            treasury: Account::withdraw<TBD::TBD>(account, dao_and_crosschain_total),
+        });
     }
 
-    /// Called by user, the user claim pool have stake asset
-    public fun claim<PoolType: store>(account: &signer) {
-        YieldFarming::claim<PoolType, TBD::TBD, LinearReleaseAsset>(
-            account, TBD::token_address(), LinearReleaseAsset { value: 0 });
-    }
-
-    /// Called by admin, increase or decrease linear asset value
-    public fun admin_add_linear_asset<PoolType: store>(account: &signer,
-                                                       beneficiary: address,
-                                                       amount: u128) acquires GovModfiyParamCapability {
-        TBD::assert_genesis_address(account);
-        assert(YieldFarming::exists_stake_at_address<PoolType, TBD::TBD>(beneficiary), ERR_USER_NOT_CLAIM);
-
-        let asset_wrapper = YieldFarming::borrow_asset<PoolType, LinearReleaseAsset>(beneficiary);
-        let (asset, asset_weight) = YieldFarming::borrow<PoolType, LinearReleaseAsset>(&mut asset_wrapper);
-
-        asset.value = asset.value + amount;
-        YieldFarming::modify(&mut asset_wrapper, asset_weight + amount);
-
-        let cap = borrow_global<GovModfiyParamCapability<PoolType, LinearReleaseAsset>>(
-            Signer::address_of(account));
-        YieldFarming::stake_with_cap<PoolType, TBD::TBD, LinearReleaseAsset>(
-            beneficiary, Signer::address_of(account), asset_wrapper, &cap.cap);
-    }
-
-    /// Harverst TBD by given pool type, call ed by user
-    public fun harvest<LinearPoolType: store>(account: &signer) {
-        let gain = YieldFarming::query_gov_token_amount<
-            LinearPoolType,
-            TBD::TBD,
-            LinearReleaseAsset>(account, TBD::token_address());
-        Debug::print(&gain);
-        let token = YieldFarming::harvest<LinearPoolType, TBD::TBD, LinearReleaseAsset>(account, TBD::token_address(), gain);
-        Account::deposit<TBD::TBD>(Signer::address_of(account), token);
+    /// dispatch to acceptor from governance treasury pool
+    public fun dispatch<PoolType: store>(account: &signer, acceptor: address, amount: u128) acquires GovTreasury {
+        let treasury = borrow_global_mut<GovTreasury<PoolType>>(Signer::address_of(account));
+        let disp_token = Token::withdraw<TBD::TBD>(&mut treasury.treasury, amount);
+        Account::deposit<TBD::TBD>(acceptor, disp_token);
     }
 }
 }

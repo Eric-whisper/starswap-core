@@ -1,4 +1,4 @@
-//! account: admin, 0x81144d60492982a45ba93fba47cae988, 10000 0x1::STC::STC
+//! account: admin, 0x598b8cbfd4536ecbe88aa1cfaffa7a62, 10000 0x1::STC::STC
 ////! account: exchanger, 10000000000000 0x1::STC::STC
 //! account: alice, 10000000000000 0x1::STC::STC
 //! account: exchanger
@@ -62,7 +62,7 @@ script {
 address alice = {{alice}};
 script {
     use alice::TokenMock::{Usdx};
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwap;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x1::STC::STC;
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
@@ -101,7 +101,7 @@ script {
 //! sender: alice
 address alice = {{alice}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC;
     use alice::TokenMock;
     fun add_liquidity(signer: signer) {
@@ -120,7 +120,7 @@ script {
 //! sender: alice
 address alice = {{alice}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC;
     use alice::TokenMock;
     use 0x1::Account;
@@ -144,7 +144,7 @@ script {
 //! sender: exchanger
 address alice = {{alice}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC;
     use alice::TokenMock;
     use 0x1::Account;
@@ -168,7 +168,7 @@ script {
 //! sender: exchanger
 address alice = {{alice}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC;
     use alice::TokenMock;
     use 0x1::Account;

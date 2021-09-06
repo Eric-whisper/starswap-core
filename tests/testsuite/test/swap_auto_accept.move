@@ -1,6 +1,6 @@
 //! account: alice, 10000000000000 0x1::STC::STC
 //! account: bob, 10000000000000 0x1::STC::STC
-//! account: admin, 0x81144d60492982a45ba93fba47cae988, 10000000000000 0x1::STC::STC
+//! account: admin, 0x598b8cbfd4536ecbe88aa1cfaffa7a62, 10000000000000 0x1::STC::STC
 //! account: liquidier, 10000000000000 0x1::STC::STC
 //! account: exchanger
 
@@ -16,7 +16,7 @@ module alice::TokenMock {
 address alice = {{alice}};
 script {
     use alice::TokenMock::{Usdx};
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwap;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x1::STC::STC;
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
@@ -30,7 +30,7 @@ script {
 address alice = {{alice}};
 script {
     use alice::TokenMock::{Usdx};
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Math;
@@ -82,8 +82,8 @@ script {
     use 0x1::Account;
     use 0x1::Signer;
     use 0x1::Debug;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwap;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
 
     fun main(signer: signer) {
         let (reserve_x, reserve_y) = TokenSwap::get_reserves<STC, Usdx>();

@@ -14,7 +14,7 @@ script {
     use 0x1::Debug;
     use alice::TokenMock::MyToken;
     use 0x1::STC::STC;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwap;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
 
     fun main(_signer: signer) {
         let ret = TokenSwap::compare_token<STC, MyToken>();
