@@ -7,7 +7,6 @@ module YieldFarming {
     use 0x1::Signer;
     use 0x1::Timestamp;
     use 0x1::Errors;
-    //use 0x1::Debug;
 
     const ERR_FARMING_INIT_REPEATE: u64 = 101;
     const ERR_FARMING_NOT_STILL_FREEZE: u64 = 102;
@@ -257,10 +256,6 @@ module YieldFarming {
         let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
         let now_seconds = Timestamp::now_seconds();
 
-//        Debug::print(&30303030303030);
-//        Debug::print(farming_asset);
-//        Debug::print(stake);
-
         let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(
             farming_asset,
             now_seconds
@@ -277,9 +272,6 @@ module YieldFarming {
 
         farming_asset.harvest_index = new_harvest_index;
         farming_asset.last_update_timestamp = now_seconds;
-
-//        Debug::print(farming_asset);
-//        Debug::print(stake);
 
         stake.gain
     }
