@@ -211,12 +211,9 @@ module TokenSwap {
                 let y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
                 assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, ERROR_SWAP_SWAPOUT_CALC_INVALID);
             };
-        //TODO swap fee setup
-
         update_token_pair<X,Y>(x_reserve, y_reserve);
         (x_swapped, y_swapped)
     }
-
 
     /// Caller should call this function to determine the order of A, B
     public fun compare_token<X: store, Y: store>(): u8 {
