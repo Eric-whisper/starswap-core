@@ -58,8 +58,11 @@ module TokenSwapFarm {
         unstake_event_handler: Event::EventHandle<UnstakeEvent>,
     }
 
-    struct FarmParameterModfiyCapability<AssetT> has key, store {
-        cap: YieldFarming::ParameterModifyCapability<PoolTypeLiquidityMint, AssetT>,
+    struct FarmParameterModfiyCapability<TokenX, TokenY> has key, store {
+        cap: YieldFarming::ParameterModifyCapability<
+            PoolTypeLiquidityMint,
+            Token::Token<LiquidityToken<TokenX, TokenY>>>,
+        release_per_seconds: u128,
     }
 
     /// Initialize farm big pool
@@ -88,8 +91,9 @@ module TokenSwapFarm {
             Token::Token<LiquidityToken<TokenX, TokenY>>
         >(account, release_per_seconds, 0);
 
-        move_to(account, FarmParameterModfiyCapability<Token::Token<LiquidityToken<TokenX, TokenY>>> {
-            cap
+        move_to(account, FarmParameterModfiyCapability<TokenX, TokenY> {
+            cap,
+            release_per_seconds,
         });
 //        // TODO (BobOng): Add to DAO
 //        GovernanceDaoProposal::plugin<
@@ -196,6 +200,12 @@ module TokenSwapFarm {
             PoolTypeLiquidityMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>
         >(account)
+    }
+
+    /// Query release per second
+    public fun query_release_per_second<TokenX: store, TokenY: store>(): u128 acquires FarmParameterModfiyCapability {
+        let cap = borrow_global<FarmParameterModfiyCapability<TokenX, TokenY>>(TBD::token_address());
+        cap.release_per_seconds
     }
 
     /// Return calculated APY

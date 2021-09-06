@@ -103,6 +103,17 @@ module TokenSwapFarmScript {
         }
     }
 
+    /// Query release per second
+    public fun query_release_per_second<TokenX: store, TokenY: store>(): u128 {
+        let order = TokenSwap::compare_token<TokenX, TokenY>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+        if (order == 1) {
+            TokenSwapFarm::query_release_per_second<TokenX, TokenY>()
+        } else {
+            TokenSwapFarm::query_release_per_second<TokenY, TokenX>()
+        }
+    }
+
     /// Lookup APY
     public fun apy<TokenX: store, TokenY: store>() : u128 {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
