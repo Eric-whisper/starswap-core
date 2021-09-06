@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: replace the address with admin address
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module TokenSwapGov {
     use 0x1::Token;
     use 0x1::Account;
     use 0x1::Math;
     use 0x1::Signer;
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarm;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGovPoolType::{PoolTypeTeam, PoolTypeInvestor, PoolTypeTechMaintenance, PoolTypeMarket, PoolTypeStockManagement, PoolTypeDaoCrosshain};
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarm;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGovPoolType::{PoolTypeTeam, PoolTypeInvestor, PoolTypeTechMaintenance, PoolTypeMarket, PoolTypeStockManagement, PoolTypeDaoCrosshain};
 
     struct GovCapability has key, store {
         mint_cap: Token::MintCapability<TBD::TBD>,

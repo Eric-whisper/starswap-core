@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // TODO: replace the address with admin address
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module TokenSwapFarm {
     use 0x1::Signer;
     use 0x1::Token;
     use 0x1::Account;
     use 0x1::Event;
     use 0x1::YieldFarming;
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwap::LiquidityToken;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGovPoolType::{PoolTypeLiquidityMint};
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap::LiquidityToken;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGovPoolType::{PoolTypeLiquidityMint};
 
     /// Event emitted when farm been added
     struct AddFarmEvent has drop, store {

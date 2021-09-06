@@ -1,5 +1,5 @@
 // address 0x2 {
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 /// TBD is a governance token of Starcoin blockchain DAPP.
 /// It uses apis defined in the `Token` module.
 module TBD {

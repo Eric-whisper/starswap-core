@@ -1,10 +1,10 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-address 0x81144d60492982a45ba93fba47cae988 {
+address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module TokenSwapGovScript {
 
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGov;
 
     /// Initial as genesis that will create pool list by Starswap Ecnomic Model list
     public(script) fun genesis_initialize(account: signer) {

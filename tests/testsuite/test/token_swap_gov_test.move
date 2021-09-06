@@ -1,6 +1,6 @@
 //! account: alice, 10000000000000 0x1::STC::STC
 //! account: bob, 10000000000000 0x1::STC::STC
-//! account: admin, 0x81144d60492982a45ba93fba47cae988, 10000000000000 0x1::STC::STC
+//! account: admin, 0x598b8cbfd4536ecbe88aa1cfaffa7a62, 10000000000000 0x1::STC::STC
 //! account: liquidier, 10000000000000 0x1::STC::STC
 //! account: exchanger
 
@@ -9,7 +9,7 @@
 //! sender: admin
 address admin = {{admin}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGov;
 
     fun main(signer: signer) {
         TokenSwapGov::genesis_initialize(&signer);
@@ -26,7 +26,7 @@ script {
 //! sender: alice
 address alice = {{alice}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
     use 0x1::Account;
 
     fun main(signer: signer) {
@@ -40,9 +40,9 @@ address admin = {{admin}};
 address alice = {{alice}};
 script {
     use 0x1::Account;
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGovPoolType::{
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGov;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGovPoolType::{
         PoolTypeTeam,
         PoolTypeInvestor,
         PoolTypeTechMaintenance,

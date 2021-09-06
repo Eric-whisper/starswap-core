@@ -1,6 +1,6 @@
 //! account: alice, 10000000000000 0x1::STC::STC
 //! account: bob, 10000000000000 0x1::STC::STC
-//! account: admin, 0x81144d60492982a45ba93fba47cae988, 10000000000000 0x1::STC::STC
+//! account: admin, 0x598b8cbfd4536ecbe88aa1cfaffa7a62, 10000000000000 0x1::STC::STC
 //! account: liquidier, 10000000000000 0x1::STC::STC
 //! account: exchanger
 
@@ -26,7 +26,7 @@ script {
     use 0x1::Math;
     use 0x1::Token;
     use admin::TokenMock::{BTC, ETH};
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
 
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
@@ -73,8 +73,8 @@ script {
 //! sender: admin
 address admin = {{admin}};
 script {
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapGov;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGov;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
@@ -89,8 +89,8 @@ script {
 address admin = {{admin}};
 script {
     use 0x1::Signer;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarmScript;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
@@ -116,8 +116,8 @@ address admin = {{admin}};
 script {
     use 0x1::Signer;
     use 0x1::Account;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarmScript;
-    use 0x81144d60492982a45ba93fba47cae988::TBD;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
@@ -138,8 +138,8 @@ script {
 address admin = {{admin}};
 script {
     use 0x1::Signer;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapFarmScript;
-    use 0x81144d60492982a45ba93fba47cae988::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
