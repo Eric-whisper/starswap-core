@@ -8,7 +8,7 @@ module TokenSwapFarm {
     use 0x1::Token;
     use 0x1::Account;
     use 0x1::Event;
-    use 0x1::YieldFarming;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::YieldFarming;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap::LiquidityToken;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
@@ -178,7 +178,7 @@ module TokenSwapFarm {
     }
 
     /// Return calculated APY
-    public fun lookup_gain<TokenX: store, TokenY: store>(account: &signer): u128 {
+    public fun lookup_gain<TokenX: store, TokenY: store>(account: address): u128 {
         YieldFarming::query_gov_token_amount<
             PoolTypeLiquidityMint,
             TBD::TBD,
@@ -195,7 +195,7 @@ module TokenSwapFarm {
     }
 
     /// Query stake amount from user
-    public fun query_stake<TokenX: store, TokenY: store>(account: &signer): u128 {
+    public fun query_stake<TokenX: store, TokenY: store>(account: address): u128 {
         YieldFarming::query_stake<
             PoolTypeLiquidityMint,
             Token::Token<LiquidityToken<TokenX, TokenY>>

@@ -51,7 +51,7 @@ module TokenSwapFarmRouter {
     }
 
     /// Get gain count
-    public fun lookup_gain<TokenX: store, TokenY: store>(account: &signer): u128 {
+    public fun lookup_gain<TokenX: store, TokenY: store>(account: address): u128 {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
         if (order == 1) {
@@ -73,7 +73,7 @@ module TokenSwapFarmRouter {
     }
 
     /// Query all stake amount
-    public fun query_stake<TokenX: store, TokenY: store>(account: &signer): u128 {
+    public fun query_stake<TokenX: store, TokenY: store>(account: address): u128 {
         let order = TokenSwap::compare_token<TokenX, TokenY>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
         if (order == 1) {

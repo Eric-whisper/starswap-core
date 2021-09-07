@@ -8,7 +8,7 @@
 address alice = {{alice}};
 module alice::YieldFarmingWarpper {
     use 0x1::Token;
-    use 0x1::YieldFarming;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::YieldFarming;
     use 0x1::Account;
     use 0x1::Signer;
 
@@ -61,7 +61,7 @@ module alice::YieldFarmingWarpper {
 //! new-transaction
 //! sender: alice
 script {
-    use 0x1::YieldFarming;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::YieldFarming;
     use 0x1::Timestamp;
     use 0x1::Debug;
 

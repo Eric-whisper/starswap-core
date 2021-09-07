@@ -7,10 +7,10 @@
 address alice = {{alice}};
 module alice::TokenMock {
     // mock MyToken token
-    struct MyToken has copy, drop, store { }
+    struct MyToken has copy, drop, store {}
 
     // mock Usdx token
-    struct Usdx has copy, drop, store { }
+    struct Usdx has copy, drop, store {}
 }
 
 //! new-transaction
@@ -21,6 +21,7 @@ script {
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Math;
+
     fun init(signer: signer) {
         let precision: u8 = 9; //STC precision is also 9.
         let scaling_factor = Math::pow(10, (precision as u64));
@@ -41,17 +42,17 @@ address alice = {{alice}};
 script {
     use alice::TokenMock::{Usdx};
     use 0x1::Account;
-//    use 0x1::Token;
-//    use 0x1::Math;
+    //    use 0x1::Token;
+    //    use 0x1::Math;
     fun init_exchanger(signer: signer) {
-//        let precision: u8 = 9; //STC precision is also 9.
-//        let scaling_factor = Math::pow(10, (precision as u64));
-//        let usdx_amount: u128 = 50000 * scaling_factor;
+        //        let precision: u8 = 9; //STC precision is also 9.
+        //        let scaling_factor = Math::pow(10, (precision as u64));
+        //        let usdx_amount: u128 = 50000 * scaling_factor;
         // Resister and mint Usdx
-//        Token::register_token<Usdx>(&signer, precision);
+        //        Token::register_token<Usdx>(&signer, precision);
         Account::do_accept_token<Usdx>(&signer);
-//        let usdx_token = Token::mint<Usdx>(&signer, usdx_amount);
-//        Account::deposit_to_self(&signer, usdx_token);
+        //        let usdx_token = Token::mint<Usdx>(&signer, usdx_amount);
+        //        Account::deposit_to_self(&signer, usdx_token);
     }
 }
 // check: EXECUTED
@@ -64,6 +65,7 @@ script {
     use alice::TokenMock::{Usdx};
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x1::STC::STC;
+
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
         TokenSwap::register_swap_pair<STC, Usdx>(&signer);
@@ -80,6 +82,7 @@ script {
     use 0x1::Token;
     use 0x1::Account;
     use 0x1::Signer;
+
     fun register_another_token(signer: signer) {
         Token::register_token<MyToken>(&signer, 6);
         Account::do_accept_token<MyToken>(&signer);
@@ -104,6 +107,7 @@ script {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC;
     use alice::TokenMock;
+
     fun add_liquidity(signer: signer) {
         // for the first add liquidity
         TokenSwapRouter::add_liquidity<STC::STC, TokenMock::Usdx>(&signer, 10000, 10000 * 10000, 10, 10);
@@ -111,7 +115,7 @@ script {
         assert(total_liquidity == 1000000 - 1000, (total_liquidity as u64));
         TokenSwapRouter::add_liquidity<STC::STC, TokenMock::Usdx>(&signer, 10000, 10000 * 10000, 10, 10);
         let total_liquidity = TokenSwapRouter::total_liquidity<STC::STC, TokenMock::Usdx>();
-        assert(total_liquidity == (1000000 - 1000)*2, (total_liquidity as u64));
+        assert(total_liquidity == (1000000 - 1000) * 2, (total_liquidity as u64));
     }
 }
 // check: EXECUTED
@@ -125,15 +129,16 @@ script {
     use alice::TokenMock;
     use 0x1::Account;
     use 0x1::Signer;
+
     fun remove_liquidity(signer: signer) {
         TokenSwapRouter::remove_liquidity<STC::STC, TokenMock::Usdx>(&signer, 10000, 10, 10);
         let _token_balance = Account::balance<TokenMock::Usdx>(Signer::address_of(&signer));
-        let expected = (10000 * 10000) * 2 * 10000 / ((1000000 - 1000)*2);
+        let expected = (10000 * 10000) * 2 * 10000 / ((1000000 - 1000) * 2);
         //assert(token_balance == expected, (token_balance as u64));
 
         //let y = to_burn_value * y_reserve / total_supply;
         let (stc_reserve, usdx_reserve) = TokenSwapRouter::get_reserves<STC::STC, TokenMock::Usdx>();
-        assert(stc_reserve == 10000 * 2 - 10000 * 2 * 10000 / ((1000000 - 1000)*2), (stc_reserve as u64));
+        assert(stc_reserve == 10000 * 2 - 10000 * 2 * 10000 / ((1000000 - 1000) * 2), (stc_reserve as u64));
         assert(usdx_reserve == 10000 * 10000 * 2 - expected, (usdx_reserve as u64));
     }
 }
@@ -173,6 +178,7 @@ script {
     use alice::TokenMock;
     use 0x1::Account;
     use 0x1::Signer;
+
     fun swap_token_for_exact_token(signer: signer) {
         let stc_balance_before = Account::balance<STC::STC>(Signer::address_of(&signer));
         let (stc_reserve, token_reserve) = TokenSwapRouter::get_reserves<STC::STC, TokenMock::Usdx>();

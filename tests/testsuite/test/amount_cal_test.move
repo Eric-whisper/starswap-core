@@ -8,7 +8,7 @@
 address alice = {{alice}};
 module alice::TokenMock {
     // mock Usdx token
-    struct Usdx has copy, drop, store { }
+    struct Usdx has copy, drop, store {}
 }
 
 //! new-transaction
@@ -18,6 +18,7 @@ script {
     use alice::TokenMock::{Usdx};
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x1::STC::STC;
+
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
         TokenSwap::register_swap_pair<STC, Usdx>(&signer);
@@ -79,6 +80,5 @@ script {
         let amount_out_3 = TokenSwapRouter::get_amount_in(100, 100000000, 10000000000);
         Debug::print<u128>(&amount_out_3);
         //assert(amount_out_3 >= amount_stc_desired, 1005);
-
     }
 }

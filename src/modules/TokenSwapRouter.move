@@ -287,7 +287,7 @@ module TokenSwapRouter {
     public fun withdraw_liquidity_token<X: store, Y: store>(account: &signer,
                                                             amount: u128): Token::Token<LiquidityToken<X, Y>> {
         let user_liquidity = liquidity<X, Y>(Signer::address_of(account));
-        assert(user_liquidity <= amount, ERROR_ROUTER_WITHDRAW_INSUFFICIENT);
+        assert(amount <= user_liquidity, ERROR_ROUTER_WITHDRAW_INSUFFICIENT);
 
         Account::withdraw<LiquidityToken<X, Y>>(account, amount)
     }

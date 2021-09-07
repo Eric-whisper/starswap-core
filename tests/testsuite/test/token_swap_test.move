@@ -23,6 +23,7 @@ script {
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Math;
+
     fun init(signer: signer) {
         let precision: u8 = 9; //STC precision is also 9.
         let scaling_factor = Math::pow(10, (precision as u64));

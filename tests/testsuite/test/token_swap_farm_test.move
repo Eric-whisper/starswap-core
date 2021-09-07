@@ -44,13 +44,13 @@ script {
             Account::deposit_to_self(&signer, mint_token);
         };
 
-        {
-            // Resister and mint ETH
-            Token::register_token<ETH>(&signer, precision);
-            Account::do_accept_token<ETH>(&signer);
-            let mint_token = Token::mint<ETH>(&signer, 100000000 * scaling_factor);
-            Account::deposit_to_self(&signer, mint_token);
-        };
+       {
+           // Resister and mint ETH
+           Token::register_token<ETH>(&signer, precision);
+           Account::do_accept_token<ETH>(&signer);
+           let mint_token = Token::mint<ETH>(&signer, 100000000 * scaling_factor);
+           Account::deposit_to_self(&signer, mint_token);
+       };
 
         let amount_btc_desired: u128 = 10 * scaling_factor;
         let amount_eth_desired: u128 = 50 * scaling_factor;
@@ -97,7 +97,7 @@ script {
         let liquidity_amount = TokenSwapRouter::liquidity<BTC, ETH>(Signer::address_of(&signer));
         TokenSwapFarmRouter::stake<BTC, ETH>(&signer, liquidity_amount);
 
-        let stake_amount = TokenSwapFarmRouter::query_stake<BTC, ETH>(&signer);
+        let stake_amount = TokenSwapFarmRouter::query_stake<BTC, ETH>(Signer::address_of(&signer));
         assert(stake_amount == liquidity_amount, 1003);
 
         let total_stake_amount = TokenSwapFarmRouter::query_total_stake<BTC, ETH>();

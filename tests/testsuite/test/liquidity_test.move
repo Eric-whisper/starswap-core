@@ -7,10 +7,10 @@
 address alice = {{alice}};
 module alice::TokenMock {
     // mock MyToken token
-    struct MyToken has copy, drop, store { }
+    struct MyToken has copy, drop, store {}
 
     // mock Usdx token
-    struct Usdx has copy, drop, store { }
+    struct Usdx has copy, drop, store {}
 }
 
 //! new-transaction
@@ -22,6 +22,7 @@ script {
     use 0x1::Account;
     use 0x1::Token;
     use 0x1::Math;
+
     fun init(signer: signer) {
         let precision: u8 = 9; //STC precision is also 9.
         let scaling_factor = Math::pow(10, (precision as u64));
@@ -32,8 +33,8 @@ script {
         let usdx_token = Token::mint<Usdx>(&signer, usdx_amount);
         Account::deposit_to_self(&signer, usdx_token);
 
-//        let usdx_token_2 = Token::mint<Usdx>(&signer, usdx_amount);
-//        Account::deposit(@liquidier, usdx_token_2);
+        //        let usdx_token_2 = Token::mint<Usdx>(&signer, usdx_amount);
+        //        Account::deposit(@liquidier, usdx_token_2);
     }
 }
 // check: EXECUTED
@@ -66,6 +67,7 @@ script {
     use alice::TokenMock::{Usdx};
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x1::STC::STC;
+
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
         TokenSwap::register_swap_pair<STC, Usdx>(&signer);
@@ -99,26 +101,26 @@ script {
         let amount_stc_min: u128 = 1 * scaling_factor;
         let amount_usdx_min: u128 = 1 * scaling_factor;
         TokenSwapRouter::add_liquidity<STC, Usdx>(&signer,
-        amount_stc_desired, amount_usdx_desired, amount_stc_min, amount_usdx_min);
+            amount_stc_desired, amount_usdx_desired, amount_stc_min, amount_usdx_min);
         let total_liquidity: u128 = TokenSwapRouter::total_liquidity<STC, Usdx>();
         assert(total_liquidity > amount_stc_min, 10000);
         // Balance verify
         assert(Account::balance<STC>(Signer::address_of(&signer)) ==
-        (stc_amount - amount_stc_desired), 10001);
+               (stc_amount - amount_stc_desired), 10001);
         assert(Account::balance<Usdx>(Signer::address_of(&signer)) ==
-        (usdx_amount - amount_usdx_desired), 10002);
+               (usdx_amount - amount_usdx_desired), 10002);
 
         ////////////////////////////////////////////////////////////////////////////////////////////
         // Swap token pair, put 1 STC, got 5 Usdx
         let pledge_stc_amount: u128 = 1 * scaling_factor;
         let pledge_usdx_amount: u128 = 5 * scaling_factor;
         TokenSwapRouter::swap_exact_token_for_token<STC, Usdx>(
-        &signer, pledge_stc_amount, pledge_stc_amount);
+            &signer, pledge_stc_amount, pledge_stc_amount);
         assert(Account::balance<STC>(Signer::address_of(&signer)) ==
-        (stc_amount - amount_stc_desired - pledge_stc_amount), 10004);
+               (stc_amount - amount_stc_desired - pledge_stc_amount), 10004);
         // TODO: To verify why swap out less than ratio swap out
         assert(Account::balance<Usdx>(Signer::address_of(&signer)) <=
-        (usdx_amount - amount_usdx_desired + pledge_usdx_amount), 10005);
+               (usdx_amount - amount_usdx_desired + pledge_usdx_amount), 10005);
     }
 }
 

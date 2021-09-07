@@ -1,7 +1,7 @@
 // Copyright (c) The Starcoin Core Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-address 0x1 {
+address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module YieldFarming {
     use 0x1::Token;
     use 0x1::Signer;
@@ -251,9 +251,9 @@ module YieldFarming {
     /// The user can quering all yield farming amount in any time and scene
     public fun query_gov_token_amount<PoolType: store,
                                       RewardTokenT: store,
-                                      AssetT: store>(account: &signer, broker: address): u128 acquires FarmingAsset, Stake {
+                                      AssetT: store>(account: address, broker: address): u128 acquires FarmingAsset, Stake {
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
-        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
+        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
         let now_seconds = Timestamp::now_seconds();
 
         let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(
@@ -285,8 +285,8 @@ module YieldFarming {
 
     /// Query stake weight from user staking objects.
     public fun query_stake<PoolType: store,
-                           AssetT: store>(account: &signer): u128 acquires Stake {
-        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
+                           AssetT: store>(account: address): u128 acquires Stake {
+        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
         stake.asset_weight
     }
 
