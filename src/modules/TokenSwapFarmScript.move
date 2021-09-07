@@ -27,27 +27,27 @@ module TokenSwapFarmScript {
     }
 
     /// Get gain count
-    public(script) fun lookup_gain<TokenX: store, TokenY: store>(account: signer): u128 {
+    public fun lookup_gain<TokenX: store, TokenY: store>(account: signer): u128 {
         TokenSwapFarmRouter::lookup_gain<TokenX, TokenY>(&account)
     }
 
     /// Query all stake amount
-    public(script) fun query_total_stake<TokenX: store, TokenY: store>(): u128 {
+    public fun query_total_stake<TokenX: store, TokenY: store>(): u128 {
         TokenSwapFarmRouter::query_total_stake<TokenX, TokenY>()
     }
 
     /// Query all stake amount
-    public(script) fun query_stake<TokenX: store, TokenY: store>(account: signer): u128 {
+    public fun query_stake<TokenX: store, TokenY: store>(account: signer): u128 {
         TokenSwapFarmRouter::query_stake<TokenX, TokenY>(&account)
     }
 
     /// Query release per second
-    public(script) fun query_release_per_second<TokenX: store, TokenY: store>(): u128 {
+    public fun query_release_per_second<TokenX: store, TokenY: store>(): u128 {
         TokenSwapFarmRouter::query_release_per_second<TokenX, TokenY>()
     }
 
     /// Lookup APY
-    public(script) fun apy<TokenX: store, TokenY: store>(): u128 {
+    public fun apy<TokenX: store, TokenY: store>(): u128 {
         TokenSwapFarmRouter::apy<TokenX, TokenY>()
     }
 }
