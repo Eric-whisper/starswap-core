@@ -267,13 +267,14 @@ module YieldFarming {
             stake.asset_weight
         );
 
-        stake.gain = stake.gain + new_gain;
-        stake.last_harvest_index = new_harvest_index;
+        // Write will be reject in query function
+        // stake.gain = stake.gain + new_gain;
+        // stake.last_harvest_index = new_harvest_index;
+        // farming_asset.harvest_index = new_harvest_index;
+        // farming_asset.last_update_timestamp = now_seconds;
+        // stake.gain
+        stake.gain + new_gain
 
-        farming_asset.harvest_index = new_harvest_index;
-        farming_asset.last_update_timestamp = now_seconds;
-
-        stake.gain
     }
     
     /// Query total stake count from yield farming resource
