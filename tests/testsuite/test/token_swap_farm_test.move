@@ -57,10 +57,10 @@ script {
         let amount_btc_min: u128 = 1 * scaling_factor;
         let amount_eth_min: u128 = 1 * scaling_factor;
         TokenSwapRouter::add_liquidity<BTC, ETH>(
-            &signer, 
+            &signer,
             amount_btc_desired,
-            amount_eth_desired, 
-            amount_btc_min, 
+            amount_eth_desired,
+            amount_btc_min,
             amount_eth_min);
         let total_liquidity: u128 = TokenSwapRouter::total_liquidity<BTC, ETH>();
         assert(total_liquidity > amount_btc_min, 1002);
@@ -74,12 +74,12 @@ script {
 address admin = {{admin}};
 script {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapGov;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmRouter;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
         TokenSwapGov::genesis_initialize(&signer);
-        TokenSwapFarmScript::add_farm_pool_by_router<BTC, ETH>(&signer, 100000000);
+        TokenSwapFarmRouter::add_farm_pool<BTC, ETH>(&signer, 100000000);
     }
 }
 // check: EXECUTED
@@ -89,18 +89,18 @@ script {
 address admin = {{admin}};
 script {
     use 0x1::Signer;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
         let liquidity_amount = TokenSwapRouter::liquidity<BTC, ETH>(Signer::address_of(&signer));
-        TokenSwapFarmScript::stake_by_router<BTC, ETH>(&signer, liquidity_amount);
+        TokenSwapFarmRouter::stake<BTC, ETH>(&signer, liquidity_amount);
 
-        let stake_amount = TokenSwapFarmScript::query_stake<BTC, ETH>(&signer);
+        let stake_amount = TokenSwapFarmRouter::query_stake<BTC, ETH>(&signer);
         assert(stake_amount == liquidity_amount, 1003);
 
-        let total_stake_amount = TokenSwapFarmScript::query_total_stake<BTC, ETH>();
+        let total_stake_amount = TokenSwapFarmRouter::query_total_stake<BTC, ETH>();
         assert(total_stake_amount == liquidity_amount, 1004);
     }
 }
@@ -116,12 +116,12 @@ address admin = {{admin}};
 script {
     use 0x1::Signer;
     use 0x1::Account;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TBD;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
-        TokenSwapFarmScript::harvest_by_router<BTC, ETH>(&signer, 0);
+        TokenSwapFarmRouter::harvest<BTC, ETH>(&signer, 0);
         let rewards_amount = Account::balance<TBD::TBD>(Signer::address_of(&signer));
         assert(rewards_amount > 0, 1004);
     }
@@ -138,12 +138,12 @@ script {
 address admin = {{admin}};
 script {
     use 0x1::Signer;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmScript;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use admin::TokenMock::{BTC, ETH};
 
     fun main(signer: signer) {
-        TokenSwapFarmScript::unstake_by_router<BTC, ETH>(&signer);
+        TokenSwapFarmRouter::unstake<BTC, ETH>(&signer);
         let liquidity_amount = TokenSwapRouter::liquidity<BTC, ETH>(Signer::address_of(&signer));
         assert(liquidity_amount > 0, 1005);
     }

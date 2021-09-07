@@ -4,126 +4,51 @@
 // TODO: replace the address with admin address
 address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module TokenSwapFarmScript {
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarm;
-
-    const ERROR_ROUTER_INVALID_TOKEN_PAIR: u64 = 5001;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapFarmRouter;
 
     /// Called by admin account
     public(script) fun add_farm_pool<TokenX: store, TokenY: store>(account: signer, release_per_second: u128) {
-        add_farm_pool_by_router<TokenX, TokenY>(&account, release_per_second);
+        TokenSwapFarmRouter::add_farm_pool<TokenX, TokenY>(&account, release_per_second);
     }
 
     /// Stake liquidity token
     public(script) fun stake<TokenX: store, TokenY: store>(account: signer, amount: u128) {
-        stake_by_router<TokenX, TokenY>(&account, amount);
+        TokenSwapFarmRouter::stake<TokenX, TokenY>(&account, amount);
     }
 
     /// Unstake liquidity token
     public(script) fun unstake<TokenX: store, TokenY: store>(account: signer) {
-        unstake_by_router<TokenX, TokenY>(&account);
+        TokenSwapFarmRouter::unstake<TokenX, TokenY>(&account);
     }
 
     /// Havest governance token from pool
     public(script) fun harvest<TokenX: store, TokenY: store>(account: signer, amount: u128) {
-        harvest_by_router<TokenX, TokenY>(&account, amount);
-    }
-
-    public fun add_farm_pool_by_router<TokenX: store, TokenY: store>(account: &signer, release_per_second: u128) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::add_farm<TokenX, TokenY>(account, release_per_second);
-        } else {
-            TokenSwapFarm::add_farm<TokenY, TokenX>(account, release_per_second);
-        };
-    }
-
-    public fun stake_by_router<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::stake<TokenX, TokenY>(account, amount);
-        } else {
-            TokenSwapFarm::stake<TokenY, TokenX>(account, amount);
-        };
-    }
-
-    public fun unstake_by_router<TokenX: store, TokenY: store>(account: &signer) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::unstake<TokenX, TokenY>(account);
-        } else {
-            TokenSwapFarm::unstake<TokenY, TokenX>(account);
-        }
-    }
-
-    /// Havest governance token from pool
-    public fun harvest_by_router<TokenX: store, TokenY: store>(account: &signer, amount: u128) {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::harvest<TokenX, TokenY>(account, amount);
-        } else {
-            TokenSwapFarm::harvest<TokenY, TokenX>(account, amount);
-        }
+        TokenSwapFarmRouter::harvest<TokenX, TokenY>(&account, amount);
     }
 
     /// Get gain count
-    public fun lookup_gain<TokenX: store, TokenY: store>(account: &signer) : u128 {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::lookup_gain<TokenX, TokenY>(account)
-        } else {
-            TokenSwapFarm::lookup_gain<TokenY, TokenX>(account)
-        }
+    public(script) fun lookup_gain<TokenX: store, TokenY: store>(account: signer): u128 {
+        TokenSwapFarmRouter::lookup_gain<TokenX, TokenY>(&account)
     }
 
     /// Query all stake amount
-    public fun query_total_stake<TokenX: store, TokenY: store>() : u128 {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::query_total_stake<TokenX, TokenY>()
-        } else {
-            TokenSwapFarm::query_total_stake<TokenY, TokenX>()
-        }
+    public(script) fun query_total_stake<TokenX: store, TokenY: store>(): u128 {
+        TokenSwapFarmRouter::query_total_stake<TokenX, TokenY>()
     }
 
     /// Query all stake amount
-    public fun query_stake<TokenX: store, TokenY: store>(account: &signer) : u128 {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::query_stake<TokenX, TokenY>(account)
-        } else {
-            TokenSwapFarm::query_stake<TokenY, TokenX>(account)
-        }
+    public(script) fun query_stake<TokenX: store, TokenY: store>(account: signer): u128 {
+        TokenSwapFarmRouter::query_stake<TokenX, TokenY>(&account)
     }
 
     /// Query release per second
-    public fun query_release_per_second<TokenX: store, TokenY: store>(): u128 {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::query_release_per_second<TokenX, TokenY>()
-        } else {
-            TokenSwapFarm::query_release_per_second<TokenY, TokenX>()
-        }
+    public(script) fun query_release_per_second<TokenX: store, TokenY: store>(): u128 {
+        TokenSwapFarmRouter::query_release_per_second<TokenX, TokenY>()
     }
 
     /// Lookup APY
-    public fun apy<TokenX: store, TokenY: store>() : u128 {
-        let order = TokenSwap::compare_token<TokenX, TokenY>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        if (order == 1) {
-            TokenSwapFarm::apy<TokenX, TokenY>()
-        } else {
-            TokenSwapFarm::apy<TokenY, TokenX>()
-        }
+    public(script) fun apy<TokenX: store, TokenY: store>(): u128 {
+        TokenSwapFarmRouter::apy<TokenX, TokenY>()
     }
-
 }
 }
