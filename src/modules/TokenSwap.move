@@ -263,7 +263,7 @@ module TokenSwap {
     }
 
     // TWAP price oracle, include update reserves and, on the first call per block, price accumulators
-    fun update_token_pair <X: store, Y: store>(
+    fun update_token_pair<X: store, Y: store>(
         x_reserve: u128,
         y_reserve: u128,
     ): () acquires TokenPair{
@@ -275,8 +275,8 @@ module TokenSwap {
         let time_elapsed = (block_timestamp - last_block_timestamp as u128);
         if (time_elapsed > 0 && x_reserve !=0 && y_reserve != 0){
             //TODO avoid overflow ?
-            token_pair.last_price_x_cumulative =  token_pair.last_price_x_cumulative + (y_reserve / x_reserve * time_elapsed);
-            token_pair.last_price_y_cumulative =  token_pair.last_price_y_cumulative + (x_reserve / y_reserve * time_elapsed);
+            token_pair.last_price_x_cumulative = token_pair.last_price_x_cumulative + (y_reserve / x_reserve * time_elapsed);
+            token_pair.last_price_y_cumulative = token_pair.last_price_y_cumulative + (x_reserve / y_reserve * time_elapsed);
         };
 
         token_pair.last_block_timestamp = block_timestamp;

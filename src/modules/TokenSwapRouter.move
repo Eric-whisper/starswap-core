@@ -196,95 +196,97 @@ module TokenSwapRouter {
     }
 
     ///--------------------- swap router start----------------------- ///
+//    public fun swap_exact_token_for_token<X: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in: u128,
+//        amount_y_out_min: u128,
+//    ) {
+//        swap_exact_token_for_token_router01<X, Y>(signer, amount_x_in, amount_y_out_min);
+//    }
+//
+//    public fun swap_exact_token_for_token_router01<X: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in: u128,
+//        amount_y_out_min: u128,
+//    ) {
+//        let order = TokenSwap::compare_token<X, Y>();
+//        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        // calculate actual y out
+//        let (reserve_x, reserve_y) = get_reserves<X, Y>();
+//        let y_out = get_amount_out(amount_x_in, reserve_x, reserve_y);
+//        assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
+//        // do actual swap
+//        intra_swap_exact_token_for_token<X, Y>(signer, amount_x_in, y_out, order);
+//    }
+//
+//
+//    public fun swap_exact_token_for_token_router02<X: store, R: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in: u128,
+//        amount_y_out_min: u128,
+//    ) {
+//        let order_x_r = TokenSwap::compare_token<X, R>();
+//        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        let order_r_y = TokenSwap::compare_token<R, Y>();
+//        assert(order_r_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//
+//        // calculate actual y out
+//        let amounts = get_amounts_out_router02<X, R, Y>(amount_x_in);
+//        let amounts_length = Vector::length(&amounts);
+//        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_TWO, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
+//        let y_out = *Vector::borrow(&amounts, (amounts_length - 1));
+//        assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
+//
+//        // do actual swap
+//        //the implementation can be done in traversal syntax ? How?
+////        let i = 0;
+////        while (i < amounts_length){
+////            let y_out = *Vector::borrow(&amounts, i);
+////            i = i + 1;
+////        };
+//        let r_out = *Vector::borrow(&amounts, (amounts_length - 2));
+//        intra_swap_exact_token_for_token<X, R>(signer, amount_x_in, r_out, order_x_r);
+//        intra_swap_exact_token_for_token<R, Y>(signer, r_out, y_out, order_r_y);
+//    }
+//
+//    public fun swap_exact_token_for_token_router03<X: store, R: store, T: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in: u128,
+//        amount_y_out_min: u128,
+//    ) {
+//        let order_x_r = TokenSwap::compare_token<X, R>();
+//        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        let order_r_t = TokenSwap::compare_token<R, T>();
+//        assert(order_r_t != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        let order_t_y = TokenSwap::compare_token<T, Y>();
+//        assert(order_t_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//
+//        // calculate actual y out
+//        let amounts = get_amounts_out_router03<X, R, T, Y>(amount_x_in);
+//        let amounts_length = Vector::length(&amounts);
+//        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_THREE, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
+//        let y_out = *Vector::borrow(&amounts, (amounts_length - 1));
+//        assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
+//
+//        // do actual swap
+//        let t_out = *Vector::borrow(&amounts, (amounts_length - 2));
+//        let r_out = *Vector::borrow(&amounts, (amounts_length - 3));
+//        intra_swap_exact_token_for_token<X, R>(signer, amount_x_in, r_out, order_x_r);
+//        intra_swap_exact_token_for_token<R, Y>(signer, r_out, t_out, order_r_t);
+//        intra_swap_exact_token_for_token<R, Y>(signer, t_out, y_out, order_t_y);
+//    }
+
     public fun swap_exact_token_for_token<X: store, Y: store>(
         signer: &signer,
         amount_x_in: u128,
-        amount_y_out_min: u128,
-    ) {
-        swap_exact_token_for_token_router01<X, Y>(signer, amount_x_in, amount_y_out_min);
-    }
-
-    public fun swap_exact_token_for_token_router01<X: store, Y: store>(
-        signer: &signer,
-        amount_x_in: u128,
-        amount_y_out_min: u128,
-    ) {
-        let order = TokenSwap::compare_token<X, Y>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        // calculate actual y out
-        let (reserve_x, reserve_y) = get_reserves<X, Y>();
-        let y_out = get_amount_out(amount_x_in, reserve_x, reserve_y);
-        assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
-        // do actual swap
-        intra_swap_exact_token_for_token<X, Y>(signer, amount_x_in, y_out, order);
-    }
-
-
-    public fun swap_exact_token_for_token_router02<X: store, R: store, Y: store>(
-        signer: &signer,
-        amount_x_in: u128,
-        amount_y_out_min: u128,
-    ) {
-        let order_x_r = TokenSwap::compare_token<X, R>();
-        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        let order_r_y = TokenSwap::compare_token<R, Y>();
-        assert(order_r_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-
-        // calculate actual y out
-        let amounts = get_amounts_out_router02<X, R, Y>(amount_x_in);
-        let amounts_length = Vector::length(&amounts);
-        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_TWO, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
-        let y_out = *Vector::borrow(&amounts, (amounts_length - 1));
-        assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
-
-        // do actual swap
-        //the implementation can be done in traversal syntax ? How?
-//        let i = 0;
-//        while (i < amounts_length){
-//            let y_out = *Vector::borrow(&amounts, i);
-//            i = i + 1;
-//        };
-        let r_out = *Vector::borrow(&amounts, (amounts_length - 2));
-        intra_swap_exact_token_for_token<X, R>(signer, amount_x_in, r_out, order_x_r);
-        intra_swap_exact_token_for_token<R, Y>(signer, r_out, y_out, order_r_y);
-    }
-
-    public fun swap_exact_token_for_token_router03<X: store, R: store, T: store, Y: store>(
-        signer: &signer,
-        amount_x_in: u128,
-        amount_y_out_min: u128,
-    ) {
-        let order_x_r = TokenSwap::compare_token<X, R>();
-        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        let order_r_t = TokenSwap::compare_token<R, T>();
-        assert(order_r_t != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        let order_t_y = TokenSwap::compare_token<T, Y>();
-        assert(order_t_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-
-        // calculate actual y out
-        let amounts = get_amounts_out_router03<X, R, T, Y>(amount_x_in);
-        let amounts_length = Vector::length(&amounts);
-        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_THREE, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
-        let y_out = *Vector::borrow(&amounts, (amounts_length - 1));
-        assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
-
-        // do actual swap
-        let t_out = *Vector::borrow(&amounts, (amounts_length - 2));
-        let r_out = *Vector::borrow(&amounts, (amounts_length - 3));
-        intra_swap_exact_token_for_token<X, R>(signer, amount_x_in, r_out, order_x_r);
-        intra_swap_exact_token_for_token<R, Y>(signer, r_out, t_out, order_r_t);
-        intra_swap_exact_token_for_token<R, Y>(signer, t_out, y_out, order_t_y);
-    }
-
-
-    fun intra_swap_exact_token_for_token<X: store, Y: store>(
-        signer: &signer,
-        amount_x_in: u128,
         y_out: u128,
-        order: u8,
+        swap_fee: bool
     ) {
         // auto accept swap token
         swap_pair_token_auto_accept<Y>(signer);
+
+        let order = TokenSwap::compare_token<X, Y>();
+
         // do actual swap
         let token_x = Account::withdraw<X>(signer, amount_x_in);
         let (token_x_out, token_y_out);
@@ -297,7 +299,9 @@ module TokenSwapRouter {
         Account::deposit(Signer::address_of(signer), token_y_out);
 
         //swap fee setup
-        swap_exact_token_for_token_swap_fee_setup<X, Y>(amount_x_in, y_out);
+        if (swap_fee) {
+            swap_exact_token_for_token_swap_fee_setup<X, Y>(amount_x_in, y_out);
+        };
     }
 
     fun swap_exact_token_for_token_swap_fee_setup<X: store, Y: store>(amount_x_in: u128, y_out: u128) {
@@ -316,98 +320,99 @@ module TokenSwapRouter {
                 let (reserve_y, reserve_fee) = get_reserves<Y, BX_USDT>();
                 let fee_out = get_amount_out_without_fee(swap_fee, reserve_y, reserve_fee);
                 TokenSwap::swap_fee_swap<X, Y, BX_USDT>(swap_fee, fee_out, false, fee_order);
-            }else{
+            } else {
                 //TODO swap fee retention in LP pool
             }
         };
     }
 
 
+//    public fun swap_token_for_exact_token<X: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in_max: u128,
+//        amount_y_out: u128,
+//    ) {
+//        swap_token_for_exact_token_router01<X, Y>(signer, amount_x_in_max, amount_y_out);
+//    }
+//    public fun swap_token_for_exact_token_router01<X: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in_max: u128,
+//        amount_y_out: u128,
+//    ) {
+//        let order = TokenSwap::compare_token<X, Y>();
+//        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        // calculate actual x in
+//        let (reserve_x, reserve_y) = get_reserves<X, Y>();
+//        let x_in = get_amount_in(amount_y_out, reserve_x, reserve_y);
+//        assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
+//        // do actual swap
+//        intra_swap_token_for_exact_token<X, Y>(signer, x_in, amount_y_out, order);
+//        // swap fee setup
+//    }
+
+//    public fun swap_token_for_exact_token_router02<X: store, R: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in_max: u128,
+//        amount_y_out: u128,
+//    ) {
+//        let order_x_r = TokenSwap::compare_token<X, R>();
+//        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        let order_r_y = TokenSwap::compare_token<R, Y>();
+//        assert(order_r_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//
+//        // calculate actual x in
+//        let amounts = get_amounts_in_router02<X, R, Y>(amount_y_out);
+//        let amounts_length = Vector::length(&amounts);
+//        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_TWO, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
+//        let x_in = *Vector::borrow(&amounts, (amounts_length - 1));
+//        assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
+//
+//        // do actual swap
+//        let r_in = *Vector::borrow(&amounts, (amounts_length - 2));
+//        intra_swap_token_for_exact_token<X, R>(signer, x_in, r_in, order_x_r);
+//        intra_swap_token_for_exact_token<R, Y>(signer, r_in, amount_y_out, order_r_y);
+//    }
+
+
+//    public fun swap_token_for_exact_token_router03<X: store, R: store, T: store, Y: store>(
+//        signer: &signer,
+//        amount_x_in_max: u128,
+//        amount_y_out: u128,
+//    ) {
+//        let order_x_r = TokenSwap::compare_token<X, R>();
+//        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        let order_r_t = TokenSwap::compare_token<R, T>();
+//        assert(order_r_t != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//        let order_t_y = TokenSwap::compare_token<T, Y>();
+//        assert(order_t_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+//
+//        // calculate actual x in
+//        let amounts = get_amounts_in_router03<X, R, T, Y>(amount_y_out);
+//        let amounts_length = Vector::length(&amounts);
+//        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_THREE, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
+//        let x_in = *Vector::borrow(&amounts, (amounts_length - 1));
+//        assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
+//
+//        // do actual swap
+//        let r_in = *Vector::borrow(&amounts, (amounts_length - 2));
+//        let t_in = *Vector::borrow(&amounts, (amounts_length - 3));
+//        intra_swap_token_for_exact_token<X, R>(signer, x_in, r_in, order_x_r);
+//        intra_swap_token_for_exact_token<R, T>(signer, r_in, t_in, order_r_t);
+//        intra_swap_token_for_exact_token<T, Y>(signer, t_in, amount_y_out, order_t_y);
+//    }
+
     public fun swap_token_for_exact_token<X: store, Y: store>(
-        signer: &signer,
-        amount_x_in_max: u128,
-        amount_y_out: u128,
-    ) {
-        swap_token_for_exact_token_router01<X, Y>(signer, amount_x_in_max, amount_y_out);
-    }
-
-    public fun swap_token_for_exact_token_router01<X: store, Y: store>(
-        signer: &signer,
-        amount_x_in_max: u128,
-        amount_y_out: u128,
-    ) {
-        let order = TokenSwap::compare_token<X, Y>();
-        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        // calculate actual x in
-        let (reserve_x, reserve_y) = get_reserves<X, Y>();
-        let x_in = get_amount_in(amount_y_out, reserve_x, reserve_y);
-        assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
-        // do actual swap
-        intra_swap_token_for_exact_token<X, Y>(signer, x_in, amount_y_out, order);
-        // swap fee setup
-
-    }
-
-
-    public fun swap_token_for_exact_token_router02<X: store, R: store, Y: store>(
-        signer: &signer,
-        amount_x_in_max: u128,
-        amount_y_out: u128,
-    ) {
-        let order_x_r = TokenSwap::compare_token<X, R>();
-        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        let order_r_y = TokenSwap::compare_token<R, Y>();
-        assert(order_r_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-
-        // calculate actual x in
-        let amounts = get_amounts_in_router02<X, R, Y>(amount_y_out);
-        let amounts_length = Vector::length(&amounts);
-        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_TWO, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
-        let x_in = *Vector::borrow(&amounts, (amounts_length - 1));
-        assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
-
-        // do actual swap
-        let r_in = *Vector::borrow(&amounts, (amounts_length - 2));
-        intra_swap_token_for_exact_token<X, R>(signer, x_in, r_in, order_x_r);
-        intra_swap_token_for_exact_token<R, Y>(signer, r_in, amount_y_out, order_r_y);
-    }
-
-
-    public fun swap_token_for_exact_token_router03<X: store, R: store, T: store, Y: store>(
-        signer: &signer,
-        amount_x_in_max: u128,
-        amount_y_out: u128,
-    ) {
-        let order_x_r = TokenSwap::compare_token<X, R>();
-        assert(order_x_r != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        let order_r_t = TokenSwap::compare_token<R, T>();
-        assert(order_r_t != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-        let order_t_y = TokenSwap::compare_token<T, Y>();
-        assert(order_t_y != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
-
-        // calculate actual x in
-        let amounts = get_amounts_in_router03<X, R, T, Y>(amount_y_out);
-        let amounts_length = Vector::length(&amounts);
-        assert(amounts_length == ROUTER_SWAP_ROUTER_DEPTH_THREE, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
-        let x_in = *Vector::borrow(&amounts, (amounts_length - 1));
-        assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
-
-        // do actual swap
-        let r_in = *Vector::borrow(&amounts, (amounts_length - 2));
-        let t_in = *Vector::borrow(&amounts, (amounts_length - 3));
-        intra_swap_token_for_exact_token<X, R>(signer, x_in, r_in, order_x_r);
-        intra_swap_token_for_exact_token<R, T>(signer, r_in, t_in, order_r_t);
-        intra_swap_token_for_exact_token<T, Y>(signer, t_in, amount_y_out, order_t_y);
-    }
-
-    fun intra_swap_token_for_exact_token<X: store, Y: store>(
         signer: &signer,
         x_in: u128,
         amount_y_out: u128,
-        order: u8,
+        swap_fee: bool
     ) {
+        let order = TokenSwap::compare_token<X, Y>();
+        assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);
+
         // auto accept swap token
         swap_pair_token_auto_accept<Y>(signer);
+
         // do actual swap
         let token_x = Account::withdraw<X>(signer, x_in);
         let (token_x_out, token_y_out);
@@ -422,7 +427,9 @@ module TokenSwapRouter {
         Account::deposit(Signer::address_of(signer), token_y_out);
 
         //swap fee setup
-        swap_token_for_exact_token_swap_fee_setup<X, Y>(x_in, amount_y_out);
+        if (swap_fee) {
+            swap_token_for_exact_token_swap_fee_setup<X, Y>(x_in, amount_y_out);
+        };
     }
 
     fun swap_token_for_exact_token_swap_fee_setup<X: store, Y: store>(x_in: u128, amount_y_out: u128) {
@@ -465,96 +472,95 @@ module TokenSwapRouter {
 
     //// Helper functions to help user use TokenSwap ////
 
-    /// Return amount_y needed to provide liquidity given `amount_x`
-    public fun quote(amount_x: u128, reserve_x: u128, reserve_y: u128): u128 {
-        assert(amount_x > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        assert(reserve_x > 0 && reserve_y > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        let amount_y = amount_x * reserve_y / reserve_x;
-        amount_y
-    }
+//    /// Return amount_y needed to provide liquidity given `amount_x`
+//    public fun quote(amount_x: u128, reserve_x: u128, reserve_y: u128): u128 {
+//        assert(amount_x > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        assert(reserve_x > 0 && reserve_y > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        let amount_y = amount_x * reserve_y / reserve_x;
+//        amount_y
+//    }
+//
+//    public fun get_amount_out(amount_in: u128, reserve_in: u128, reserve_out: u128): u128 {
+//        assert(amount_in > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        let amount_in_with_fee = amount_in * 997;
+//        let numerator = amount_in_with_fee * reserve_out;
+//        let denominator = reserve_in * 1000 + amount_in_with_fee;
+//        numerator / denominator
+//    }
+//    public fun get_amounts_out_router02<X: store, R: store, Y: store>(amount_in: u128): vector<u128> {
+//        let amounts = Vector::empty();
+//        let (reserve_x, reserve_r) = get_reserves<X, R>();
+//        let r_out = get_amount_out(amount_in, reserve_x, reserve_r);
+//        Vector::push_back(&mut amounts, r_out);
+//
+//        let (reserve_r, reserve_y) = get_reserves<R, Y>();
+//        let y_out = get_amount_out(r_out, reserve_r, reserve_y);
+//        Vector::push_back(&mut amounts, y_out);
+//        amounts
+//    }
 
-    public fun get_amount_out(amount_in: u128, reserve_in: u128, reserve_out: u128): u128 {
-        assert(amount_in > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        let amount_in_with_fee = amount_in * 997;
-        let numerator = amount_in_with_fee * reserve_out;
-        let denominator = reserve_in * 1000 + amount_in_with_fee;
-        numerator / denominator
-    }
+//    public fun get_amounts_out_router03<X: store, R: store, T: store, Y: store>(amount_in: u128): vector<u128> {
+//        let last_router_amounts_len = 2;
+//        let amounts = get_amounts_out_router02<X, R, T>(amount_in);
+//        assert(Vector::length(&amounts) == last_router_amounts_len, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
+//        let t_out = *Vector::borrow(&amounts, (last_router_amounts_len - 1));
+//
+//        let (reserve_t, reserve_y) = get_reserves<T, Y>();
+//        let y_out = get_amount_out(t_out, reserve_t, reserve_y);
+//        Vector::push_back(&mut amounts, y_out);
+//        amounts
+//    }
 
-    public fun get_amounts_out_router02<X: store, R: store, Y: store>(amount_in: u128): vector<u128> {
-        let amounts = Vector::empty();
-        let (reserve_x, reserve_r) = get_reserves<X, R>();
-        let r_out = get_amount_out(amount_in, reserve_x, reserve_r);
-        Vector::push_back(&mut amounts, r_out);
+//    public fun get_amount_out_without_fee(amount_in: u128, reserve_in: u128, reserve_out: u128): u128 {
+//        assert(amount_in > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        let numerator = amount_in * reserve_out;
+//        let denominator = reserve_in  + amount_in;
+//        numerator / denominator
+//    }
 
-        let (reserve_r, reserve_y) = get_reserves<R, Y>();
-        let y_out = get_amount_out(r_out, reserve_r, reserve_y);
-        Vector::push_back(&mut amounts, y_out);
-        amounts
-    }
+//    public fun get_amount_in(amount_out: u128, reserve_in: u128, reserve_out: u128): u128 {
+//        assert(amount_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        let numerator = reserve_in * amount_out * 1000;
+//        let denominator = (reserve_out - amount_out) * 997;
+//        numerator / denominator + 1
+//    }
 
-    public fun get_amounts_out_router03<X: store, R: store, T: store, Y: store>(amount_in: u128): vector<u128> {
-        let last_router_amounts_len = 2;
-        let amounts = get_amounts_out_router02<X, R, T>(amount_in);
-        assert(Vector::length(&amounts) == last_router_amounts_len, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
-        let t_out = *Vector::borrow(&amounts, (last_router_amounts_len - 1));
+//    /// reverse order
+//    public fun get_amounts_in_router02<X: store, R: store, Y: store>(amount_out: u128): vector<u128> {
+//        let amounts = Vector::empty();
+//        let (reserve_r, reserve_y) = get_reserves<R, Y>();
+//        let r_in = get_amount_in(amount_out, reserve_r, reserve_y);
+//        Vector::push_back(&mut amounts, r_in);
+//
+//        let (reserve_x, reserve_r) = get_reserves<X, R>();
+//        let x_in = get_amount_in(r_in, reserve_x, reserve_r);
+//        Vector::push_back(&mut amounts, x_in);
+//        amounts
+//    }
 
-        let (reserve_t, reserve_y) = get_reserves<T, Y>();
-        let y_out = get_amount_out(t_out, reserve_t, reserve_y);
-        Vector::push_back(&mut amounts, y_out);
-        amounts
-    }
+//    /// reverse order
+//    public fun get_amounts_in_router03<X: store, R: store, T: store, Y: store>(amount_out: u128): vector<u128> {
+//        let last_router_amounts_len = 2;
+//        let amounts = get_amounts_in_router02<R, T, Y>(amount_out);
+//        assert(Vector::length(&amounts) == last_router_amounts_len, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
+//        let r_in = *Vector::borrow(&amounts, (last_router_amounts_len - 1));
+//
+//        let (reserve_x, reserve_r) = get_reserves<X, R>();
+//        let x_in = get_amount_in(r_in, reserve_x, reserve_r);
+//        Vector::push_back(&mut amounts, x_in);
+//        amounts
+//    }
 
-    public fun get_amount_out_without_fee(amount_in: u128, reserve_in: u128, reserve_out: u128): u128 {
-        assert(amount_in > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        let numerator = amount_in * reserve_out;
-        let denominator = reserve_in  + amount_in;
-        numerator / denominator
-    }
-
-    public fun get_amount_in(amount_out: u128, reserve_in: u128, reserve_out: u128): u128 {
-        assert(amount_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        let numerator = reserve_in * amount_out * 1000;
-        let denominator = (reserve_out - amount_out) * 997;
-        numerator / denominator + 1
-    }
-
-    /// reverse order
-    public fun get_amounts_in_router02<X: store, R: store, Y: store>(amount_out: u128): vector<u128> {
-        let amounts = Vector::empty();
-        let (reserve_r, reserve_y) = get_reserves<R, Y>();
-        let r_in = get_amount_in(amount_out, reserve_r, reserve_y);
-        Vector::push_back(&mut amounts, r_in);
-
-        let (reserve_x, reserve_r) = get_reserves<X, R>();
-        let x_in = get_amount_in(r_in, reserve_x, reserve_r);
-        Vector::push_back(&mut amounts, x_in);
-        amounts
-    }
-
-    /// reverse order
-    public fun get_amounts_in_router03<X: store, R: store, T: store, Y: store>(amount_out: u128): vector<u128> {
-        let last_router_amounts_len = 2;
-        let amounts = get_amounts_in_router02<R, T, Y>(amount_out);
-        assert(Vector::length(&amounts) == last_router_amounts_len, ERROR_ROUTER_SWAP_ROUTER_PAIR_INVALID);
-        let r_in = *Vector::borrow(&amounts, (last_router_amounts_len - 1));
-
-        let (reserve_x, reserve_r) = get_reserves<X, R>();
-        let x_in = get_amount_in(r_in, reserve_x, reserve_r);
-        Vector::push_back(&mut amounts, x_in);
-        amounts
-    }
-
-    public fun get_amount_in_without_fee(amount_out: u128, reserve_in: u128, reserve_out: u128): u128 {
-        assert(amount_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
-        let numerator = reserve_in * amount_out;
-        let denominator = (reserve_out - amount_out);
-        numerator / denominator + 1
-    }
+//    public fun get_amount_in_without_fee(amount_out: u128, reserve_in: u128, reserve_out: u128): u128 {
+//        assert(amount_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        assert(reserve_in > 0 && reserve_out > 0, ERROR_ROUTER_PARAMETER_INVALID);
+//        let numerator = reserve_in * amount_out;
+//        let denominator = (reserve_out - amount_out);
+//        numerator / denominator + 1
+//    }
 
     /// Withdraw liquidity from users
     public fun withdraw_liquidity_token<X: store, Y: store>(account: &signer,
@@ -569,10 +575,6 @@ module TokenSwapRouter {
     public fun deposit_liquidity_token<X: store, Y: store>(account: address,
                                                            to_deposit: Token::Token<LiquidityToken<X, Y>>) {
         Account::deposit<LiquidityToken<X, Y>>(account, to_deposit);
-    }
-
-    public fun router_swap<X: store, Y: store, Z: store>() {
-
     }
 }
 }
