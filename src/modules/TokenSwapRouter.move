@@ -344,8 +344,6 @@ module TokenSwapRouter {
         assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
         // do actual swap
         intra_swap_token_for_exact_token<X, Y>(signer, x_in, amount_y_out, order);
-        // swap fee setup
-
     }
 
 
@@ -569,10 +567,6 @@ module TokenSwapRouter {
     public fun deposit_liquidity_token<X: store, Y: store>(account: address,
                                                            to_deposit: Token::Token<LiquidityToken<X, Y>>) {
         Account::deposit<LiquidityToken<X, Y>>(account, to_deposit);
-    }
-
-    public fun router_swap<X: store, Y: store, Z: store>() {
-
     }
 }
 }

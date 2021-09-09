@@ -325,10 +325,6 @@ module TokenSwap {
             };
             Token::destroy_zero(fee_from_token_out);
             Account::deposit(fee_address(), fee_token_out);
-        };
-
-//        Token::destroy_zero(fee_from_token_out);
-//        Account::deposit(fee_address(), fee_token_out);
     }
 
 }
