@@ -4,8 +4,8 @@
 address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
 module TokenSwapScripts {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter2P;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter3P;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouterDepth2nd;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouterDepth3rd;
 
     /// register swap for admin user
     public(script) fun register_swap_pair<X :store, Y: store>(account: signer) {
@@ -61,7 +61,7 @@ module TokenSwapScripts {
         amount_y_out_min: u128,
     ) {
         //TokenSwapRouter::swap_exact_token_for_token_router02<X, R, Y>(&signer, amount_x_in, amount_y_out_min);
-        TokenSwapRouter2P::swap_exact_token_for_token<X, R, Y>(&signer, amount_x_in, amount_y_out_min);
+        TokenSwapRouterDepth2nd::swap_exact_token_for_token<X, R, Y>(&signer, amount_x_in, amount_y_out_min);
     }
 
     public(script) fun swap_exact_token_for_token_router03<X: store, R: store, T: store, Y: store>(
@@ -70,7 +70,7 @@ module TokenSwapScripts {
         amount_y_out_min: u128,
     ) {
         //TokenSwapRouter::swap_exact_token_for_token_router03<X, R, T, Y>(&signer, amount_x_in, amount_y_out_min);
-        TokenSwapRouter3P::swap_exact_token_for_token<X, R, T, Y>(&signer, amount_x_in, amount_y_out_min);
+        TokenSwapRouterDepth3rd::swap_exact_token_for_token<X, R, T, Y>(&signer, amount_x_in, amount_y_out_min);
     }
 
 
@@ -96,7 +96,7 @@ module TokenSwapScripts {
         amount_y_out: u128,
     ) {
         //TokenSwapRouter::swap_token_for_exact_token_router02<X, R, Y>(&signer, amount_x_in_max, amount_y_out);
-        TokenSwapRouter3P::swap_token_for_exact_token<X, R, Y>(&signer, amount_x_in_max, amount_y_out);
+        TokenSwapRouterDepth2nd::swap_token_for_exact_token<X, R, Y>(&signer, amount_x_in_max, amount_y_out);
     }
 
     public fun swap_token_for_exact_token_router03<X: store, R: store, T: store, Y: store>(
@@ -105,7 +105,7 @@ module TokenSwapScripts {
         amount_y_out: u128,
     ) {
         //TokenSwapRouter::swap_token_for_exact_token_router03<X, R, T, Y>(&signer, amount_x_in_max, amount_y_out);
-        TokenSwapRouter3P::swap_token_for_exact_token<X, R, T, Y>(&signer, amount_x_in_max, amount_y_out);
+        TokenSwapRouterDepth3rd::swap_token_for_exact_token<X, R, T, Y>(&signer, amount_x_in_max, amount_y_out);
     }
 
 }

@@ -280,7 +280,6 @@ module TokenSwapRouter {
         signer: &signer,
         amount_x_in: u128,
         y_out: u128,
-        swap_fee: bool
     ) {
         // auto accept swap token
         swap_pair_token_auto_accept<Y>(signer);
@@ -404,8 +403,7 @@ module TokenSwapRouter {
     public fun swap_token_for_exact_token<X: store, Y: store>(
         signer: &signer,
         x_in: u128,
-        amount_y_out: u128,
-        swap_fee: bool
+        amount_y_out: u128
     ) {
         let order = TokenSwap::compare_token<X, Y>();
         assert(order != 0, ERROR_ROUTER_INVALID_TOKEN_PAIR);

@@ -3,12 +3,12 @@
 
 // TODO: replace the address with admin address
 address 0x598b8cbfd4536ecbe88aa1cfaffa7a62 {
-module TokenSwapRouter3P {
+module TokenSwapRouterDepth3rd {
 
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter2P;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapCalcHelper;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouterDepth2nd;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
 
     const ERROR_ROUTER_PARAMETER_INVALID: u64 = 1001;
     const ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED: u64 = 1002;
@@ -20,10 +20,10 @@ module TokenSwapRouter3P {
         T: store,
         Y: store
     >(amount_y_out: u128): (u128, u128, u128) {
-        let (t_in, r_in) = TokenSwapRouter2P::get_amounts_in<R, T, Y>(amount_y_out);
+        let (t_in, r_in) = TokenSwapRouterDepth2nd::get_amounts_in<R, T, Y>(amount_y_out);
 
         let (reserve_x, reserve_r) = TokenSwapRouter::get_reserves<X, R>();
-        let x_in = TokenSwapCalcHelper::get_amount_in(r_in, reserve_x, reserve_r);
+        let x_in = TokenSwapLibrary::get_amount_in(r_in, reserve_x, reserve_r);
 
         (t_in, r_in, x_in)
     }
@@ -34,10 +34,10 @@ module TokenSwapRouter3P {
         T: store,
         Y: store
     >(amount_x_in: u128): (u128, u128, u128) {
-        let (r_out, t_out) = TokenSwapRouter2P::get_amount_out<X, R, T>(amount_in);
+        let (r_out, t_out) = TokenSwapRouterDepth2nd::get_amount_out<X, R, T>(amount_in);
 
         let (reserve_t, reserve_y) = get_reserves<T, Y>();
-        let y_out = TokenSwapCalcHelper::get_amount_out(t_out, reserve_t, reserve_y);
+        let y_out = TokenSwapLibrary::get_amount_out(t_out, reserve_t, reserve_y);
 
         (r_out, t_out, y_out)
     }
@@ -56,9 +56,9 @@ module TokenSwapRouter3P {
         assert(y_out >= amount_y_out_min, ERROR_ROUTER_Y_OUT_LESSTHAN_EXPECTED);
 
         // do actual swap
-        TokenSwapRouter::intra_swap_exact_token_for_token<X, R>(signer, amount_x_in, r_out);
-        TokenSwapRouter::intra_swap_exact_token_for_token<R, Y>(signer, r_out, t_out);
-        TokenSwapRouter::intra_swap_exact_token_for_token<R, Y>(signer, t_out, y_out);
+        TokenSwapRouter::swap_exact_token_for_token<X, R>(signer, amount_x_in, r_out);
+        TokenSwapRouter::swap_exact_token_for_token<R, Y>(signer, r_out, t_out);
+        TokenSwapRouter::swap_exact_token_for_token<R, Y>(signer, t_out, y_out);
     }
 
     public fun swap_token_for_exact_token<
@@ -74,9 +74,9 @@ module TokenSwapRouter3P {
         let (t_in, r_in, x_in) = get_amount_in<X, R, T, Y>(amount_y_out);
         assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
 
-        TokenSwapRouter::intra_swap_token_for_exact_token<X, R>(signer, x_in, r_in);
-        TokenSwapRouter::intra_swap_token_for_exact_token<R, T>(signer, r_in, t_in);
-        TokenSwapRouter::intra_swap_token_for_exact_token<T, Y>(signer, t_in, amount_y_out);
+        TokenSwapRouter::swap_token_for_exact_token<X, R>(signer, x_in, r_in);
+        TokenSwapRouter::swap_token_for_exact_token<R, T>(signer, r_in, t_in);
+        TokenSwapRouter::swap_token_for_exact_token<T, Y>(signer, t_in, amount_y_out);
     }
 }
 }
