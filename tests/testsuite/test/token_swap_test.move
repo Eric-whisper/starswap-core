@@ -107,17 +107,14 @@ script {
     use 0x1::STC;
     use alice::TokenMock;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use 0x1::Account;
     use 0x1::Token;
     fun main(signer: signer) {
-//        Account::do_accept_token<TokenMock::Usdx>(&signer);
         let stc_amount = 100000;
         let stc = Account::withdraw<STC::STC>( &signer, stc_amount);
-        let amount_out = {
-            let (x, y) = TokenSwap::get_reserves<STC::STC, TokenMock::Usdx>();
-            TokenSwapRouter::get_amount_out(stc_amount, x, y)
-        };
+        let (x, y) = TokenSwap::get_reserves<STC::STC, TokenMock::Usdx>();
+        let amount_out = TokenSwapLibrary::get_amount_out(stc_amount, x, y);
         let (stc_token, usdx_token) = TokenSwap::swap<STC::STC, TokenMock::Usdx>(stc, amount_out, Token::zero<TokenMock::Usdx>(), 0);
         Token::destroy_zero(stc_token);
         Account::deposit_to_self(&signer, usdx_token);

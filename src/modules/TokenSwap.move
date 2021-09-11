@@ -55,7 +55,7 @@ module TokenSwap {
     const ERROR_SWAP_TOKEN_NOT_EXISTS: u64 = 2008;
     const ERROR_SWAP_TOKEN_FEE_INVALID: u64 = 2009;
 
-    const SWAP_FEE_ON: bool= true;
+    const SWAP_FEE_ON: bool= false;
 
     ///
     /// Check if swap pair exists
@@ -260,7 +260,7 @@ module TokenSwap {
     }
 
     fun fee_address(): address {
-        @0x598b8cbfd4536ecbe88aa1cfaffa7a62
+        @0xd231d9da8e37fc3d9ff3f576cf978535
         // 0x1
     }
 
@@ -331,7 +331,7 @@ module TokenSwap {
             let (pay_for_token_out, fee_token_out);
             let y_in_token = Token::withdraw(&mut token_pair.token_y_reserve, swap_fee);
             // fee token and the token to pay for fee compare
-            let fee_order = compare_token<X, Q>();
+            let fee_order = compare_token<Y, Q>();
             if (fee_order == 1 ) {
                 (pay_for_token_out, fee_token_out) = do_swap<Y, Q>(y_in_token, fee_out, Token::zero(), 0, false);
             } else {

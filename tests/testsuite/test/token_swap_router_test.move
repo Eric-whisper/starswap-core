@@ -150,6 +150,7 @@ script {
     use 0x1::Account;
     use 0x1::Signer;
     use 0x1::Debug;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
 
     fun swap_exact_token_for_token(signer: signer) {
         let (stc_reserve, token_reserve) = TokenSwapRouter::get_reserves<STC::STC, TokenMock::Usdx>();
@@ -157,7 +158,7 @@ script {
         Debug::print<u128>(&token_reserve);
         TokenSwapRouter::swap_exact_token_for_token<STC::STC, TokenMock::Usdx>(&signer, 1000, 0);
         let token_balance = Account::balance<TokenMock::Usdx>(Signer::address_of(&signer));
-        let expected_token_balance = TokenSwapRouter::get_amount_out(1000, stc_reserve, token_reserve);
+        let expected_token_balance = TokenSwapLibrary::get_amount_out(1000, stc_reserve, token_reserve);
         Debug::print<u128>(&token_balance);
         assert(token_balance == expected_token_balance, (token_balance as u64));
     }
@@ -173,13 +174,14 @@ script {
     use alice::TokenMock;
     use 0x1::Account;
     use 0x1::Signer;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     fun swap_token_for_exact_token(signer: signer) {
         let stc_balance_before = Account::balance<STC::STC>(Signer::address_of(&signer));
         let (stc_reserve, token_reserve) = TokenSwapRouter::get_reserves<STC::STC, TokenMock::Usdx>();
         TokenSwapRouter::swap_token_for_exact_token<STC::STC, TokenMock::Usdx>(&signer, 30, 100000);
         let stc_balance_after = Account::balance<STC::STC>(Signer::address_of(&signer));
 
-        let expected_balance_change = TokenSwapRouter::get_amount_in(100000, stc_reserve, token_reserve);
+        let expected_balance_change = TokenSwapLibrary::get_amount_in(100000, stc_reserve, token_reserve);
         assert(stc_balance_before - stc_balance_after == expected_balance_change, (expected_balance_change as u64));
     }
 }

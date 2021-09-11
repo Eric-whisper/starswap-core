@@ -8,7 +8,7 @@ module TokenSwapRouter {
     use 0x1::Signer;
     use 0x1::Token;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
-    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::BX_USDT::BX_USDT;
+    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
 
     // use 0x1::Debug;
     const ERROR_ROUTER_PARAMETER_INVALID: u64 = 1001;
@@ -223,14 +223,14 @@ module TokenSwapRouter {
 
         //swap fee setup
         if(TokenSwap::get_swap_fee_on()) {
-            swap_exact_token_for_token_swap_fee_setup<X, Y>(amount_x_in, y_out);
+            swap_exact_token_for_token_swap_fee_setup<X, Y>(amount_x_in, y_out, reserve_x, reserve_y);
         }
 
     }
 
-    fun swap_exact_token_for_token_swap_fee_setup<X: store, Y: store>(amount_x_in: u128, y_out: u128) {
+    /// use the last (reserve_x, reserve_y), (new_reserve_x, reserve_y_new) has changed
+    public fun swap_exact_token_for_token_swap_fee_setup<X: store, Y: store>(amount_x_in: u128, y_out: u128, reserve_x: u128, reserve_y: u128) {
         // swap fee setup, use Y token to pay for fee
-        let (reserve_x, reserve_y) = get_reserves<X, Y>();
         let y_out_without_fee = TokenSwapLibrary::get_amount_out_without_fee(amount_x_in, reserve_x, reserve_y);
         let swap_fee = y_out_without_fee - y_out;
         assert(swap_fee > 0, ERROR_ROUTER_SWAP_FEE_MUST_POSITIVE);
@@ -268,13 +268,12 @@ module TokenSwapRouter {
 
         //swap fee setup
         if(TokenSwap::get_swap_fee_on()) {
-            swap_token_for_exact_token_swap_fee_setup<X, Y>(x_in, amount_y_out);
+            swap_token_for_exact_token_swap_fee_setup<X, Y>(x_in, amount_y_out, reserve_x, reserve_y);
         }
     }
 
-    fun swap_token_for_exact_token_swap_fee_setup<X: store, Y: store>(x_in: u128, amount_y_out: u128) {
+    public fun swap_token_for_exact_token_swap_fee_setup<X: store, Y: store>(x_in: u128, amount_y_out: u128, reserve_x: u128, reserve_y: u128) {
         // swap fee setup, use X token to pay for fee
-        let (reserve_x, reserve_y) = get_reserves<X, Y>();
         let x_in_without_fee = TokenSwapLibrary::get_amount_in_without_fee(amount_y_out, reserve_x, reserve_y);
         let swap_fee = x_in - x_in_without_fee;
         assert(swap_fee > 0, ERROR_ROUTER_SWAP_FEE_MUST_POSITIVE);
@@ -287,7 +286,7 @@ module TokenSwapRouter {
         x_pay_for_fee: bool){
         // fee token and the token to pay for fee compare
         let fee_order = TokenSwap::compare_token<P, Q>();
-        // the token to pay for fee, is X or Y
+        // the token to pay for fee, is fee token
         if (fee_order == 0) {
             TokenSwap::swap_fee_direct<X, Y>(swap_fee, x_pay_for_fee);
         } else {
