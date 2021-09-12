@@ -38,6 +38,7 @@ script {
     use 0x1::Account;
     //use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
 
     fun main(signer: signer) {
         let precision: u8 = 9; //STC precision is also 9.
@@ -69,15 +70,15 @@ script {
         assert(reserve_x >= amount_stc_desired, 10001);
         // assert(reserve_y >=, 10002);
 
-        let amount_out_1 = TokenSwapRouter::get_amount_out(10 * scaling_factor, reserve_x, reserve_y);
+        let amount_out_1 = TokenSwapLibrary::get_amount_out(10 * scaling_factor, reserve_x, reserve_y);
         Debug::print<u128>(&amount_out_1);
         // assert(1 * scaling_factor >= (1 * scaling_factor * reserve_y) / reserve_x * (997 / 1000), 1003);
 
-        let amount_out_2 = TokenSwapRouter::quote(amount_stc_desired, reserve_x, reserve_y);
+        let amount_out_2 = TokenSwapLibrary::quote(amount_stc_desired, reserve_x, reserve_y);
         Debug::print<u128>(&amount_out_2);
         // assert(amount_out_2 <= amount_usdx_desired, 1004);
 
-        let amount_out_3 = TokenSwapRouter::get_amount_in(100, 100000000, 10000000000);
+        let amount_out_3 = TokenSwapLibrary::get_amount_in(100, 100000000, 10000000000);
         Debug::print<u128>(&amount_out_3);
         //assert(amount_out_3 >= amount_stc_desired, 1005);
     }

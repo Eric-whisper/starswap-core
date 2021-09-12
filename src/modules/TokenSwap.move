@@ -13,6 +13,7 @@ module TokenSwap {
     use 0x1::BCS;
     use 0x1::Timestamp;
     use 0x1::Event;
+    use 0x1::Account;
 
     struct LiquidityToken<X, Y> has key, store { }
 
@@ -52,6 +53,9 @@ module TokenSwap {
     const ERROR_SWAP_PRIVILEGE_INSUFFICIENT: u64 = 2006;
     const ERROR_SWAP_ADDLIQUIDITY_INVALID: u64 = 2007;
     const ERROR_SWAP_TOKEN_NOT_EXISTS: u64 = 2008;
+    const ERROR_SWAP_TOKEN_FEE_INVALID: u64 = 2009;
+
+    const SWAP_FEE_ON: bool= false;
 
     ///
     /// Check if swap pair exists
@@ -195,6 +199,16 @@ module TokenSwap {
         y_in: Token::Token<Y>,
         x_out: u128,
     ): (Token::Token<X>, Token::Token<Y>) acquires TokenPair {
+        do_swap<X, Y>(x_in, y_out, y_in, x_out, true)
+    }
+
+    fun do_swap<X: store, Y: store>(
+        x_in: Token::Token<X>,
+        y_out: u128,
+        y_in: Token::Token<Y>,
+        x_out: u128,
+        with_swap_fee: bool,
+    ): (Token::Token<X>, Token::Token<Y>) acquires TokenPair {
         let x_in_value = Token::value(&x_in);
         let y_in_value = Token::value(&y_in);
         assert(x_in_value > 0 || y_in_value > 0, ERROR_SWAP_TOKEN_INSUFFICIENT);
@@ -207,13 +221,21 @@ module TokenSwap {
             {
                 let x_reserve_new = Token::value(&token_pair.token_x_reserve);
                 let y_reserve_new = Token::value(&token_pair.token_y_reserve);
-                let x_adjusted = x_reserve_new * 1000 - x_in_value * 3;
-                let y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
+                let (x_adjusted, y_adjusted);
+                if (with_swap_fee) {
+                    x_adjusted = x_reserve_new * 1000 - x_in_value * 3;
+                    y_adjusted = y_reserve_new * 1000 - y_in_value * 3;
+                } else {
+                    x_adjusted = x_reserve_new * 1000;
+                    y_adjusted = y_reserve_new * 1000;
+                };
                 assert(x_adjusted * y_adjusted >= x_reserve * y_reserve * 1000000, ERROR_SWAP_SWAPOUT_CALC_INVALID);
             };
+
         update_token_pair<X,Y>(x_reserve, y_reserve);
         (x_swapped, y_swapped)
     }
+
 
     /// Caller should call this function to determine the order of A, B
     public fun compare_token<X: store, Y: store>(): u8 {
@@ -237,8 +259,17 @@ module TokenSwap {
         // 0x1
     }
 
+    fun fee_address(): address {
+        @0xd231d9da8e37fc3d9ff3f576cf978535
+        // 0x1
+    }
+
+    public fun get_swap_fee_on(): bool {
+        SWAP_FEE_ON
+    }
+
     // TWAP price oracle, include update reserves and, on the first call per block, price accumulators
-    fun update_token_pair <X: store, Y: store>(
+    fun update_token_pair<X: store, Y: store>(
         x_reserve: u128,
         y_reserve: u128,
     ): () acquires TokenPair{
@@ -250,11 +281,65 @@ module TokenSwap {
         let time_elapsed = (block_timestamp - last_block_timestamp as u128);
         if (time_elapsed > 0 && x_reserve !=0 && y_reserve != 0){
             //TODO avoid overflow ?
-            token_pair.last_price_x_cumulative =  token_pair.last_price_x_cumulative + (y_reserve / x_reserve * time_elapsed);
-            token_pair.last_price_y_cumulative =  token_pair.last_price_y_cumulative + (x_reserve / y_reserve * time_elapsed);
+            token_pair.last_price_x_cumulative = token_pair.last_price_x_cumulative + (y_reserve / x_reserve * time_elapsed);
+            token_pair.last_price_y_cumulative = token_pair.last_price_y_cumulative + (x_reserve / y_reserve * time_elapsed);
         };
 
         token_pair.last_block_timestamp = block_timestamp;
+    }
+
+
+    public fun swap_fee_direct<X: store, Y: store>(
+        swap_fee: u128,
+        x_pay_for_fee : bool,
+    ): () acquires TokenPair {
+        assert(swap_fee > 0 , ERROR_SWAP_TOKEN_FEE_INVALID);
+        let token_pair = borrow_global_mut<TokenPair<X, Y>>(admin_address());
+
+        // the token to pay for fee, is X or Y
+        if (x_pay_for_fee){
+            let fee_token = Token::withdraw(&mut token_pair.token_x_reserve, swap_fee);
+            Account::deposit(fee_address(), fee_token);
+        } else {
+            let fee_token = Token::withdraw(&mut token_pair.token_y_reserve, swap_fee);
+            Account::deposit(fee_address(), fee_token);
+        };
+    }
+
+    public fun swap_fee_swap<X: store, Y: store, Q: store>(
+        swap_fee: u128,
+        fee_out: u128,
+        x_pay_for_fee : bool,
+    ): () acquires TokenPair {
+        assert(swap_fee > 0 && fee_out > 0, ERROR_SWAP_TOKEN_FEE_INVALID);
+        let token_pair = borrow_global_mut<TokenPair<X, Y>>(admin_address());
+
+        // the token to pay for fee is X
+        if (x_pay_for_fee) {
+            let (pay_for_token_out, fee_token_out);
+            let x_in_token = Token::withdraw(&mut token_pair.token_x_reserve, swap_fee);
+            // fee token and the token to pay for fee compare
+            let fee_order = compare_token<X, Q>();
+            if (fee_order == 1 ) {
+                (pay_for_token_out, fee_token_out) = do_swap<X, Q>(x_in_token, fee_out, Token::zero(), 0, false);
+            } else {
+                (fee_token_out, pay_for_token_out) = do_swap<Q, X>(Token::zero(), 0, x_in_token, fee_out, false);
+            };
+            Token::destroy_zero(pay_for_token_out);
+            Account::deposit(fee_address(), fee_token_out);
+        } else {
+            let (pay_for_token_out, fee_token_out);
+            let y_in_token = Token::withdraw(&mut token_pair.token_y_reserve, swap_fee);
+            // fee token and the token to pay for fee compare
+            let fee_order = compare_token<Y, Q>();
+            if (fee_order == 1 ) {
+                (pay_for_token_out, fee_token_out) = do_swap<Y, Q>(y_in_token, fee_out, Token::zero(), 0, false);
+            } else {
+                (fee_token_out, pay_for_token_out) = do_swap<Q, Y>(Token::zero(), 0, y_in_token, fee_out, false);
+            };
+            Token::destroy_zero(pay_for_token_out);
+            Account::deposit(fee_address(), fee_token_out);
+        };
     }
 }
 }
