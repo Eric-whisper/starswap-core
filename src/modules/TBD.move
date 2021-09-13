@@ -8,7 +8,7 @@ module TBD {
     use 0x1::Signer;
 
     /// TBD token marker.
-    struct TBD has copy, drop, store { }
+    struct TBD has copy, drop, store {}
 
     /// precision of TBD token.
     const PRECISION: u8 = 9;

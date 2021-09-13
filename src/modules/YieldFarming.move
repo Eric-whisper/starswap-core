@@ -38,6 +38,9 @@ module YieldFarming {
     /// Capability to modify parameter such as period and release amount
     struct ParameterModifyCapability<PoolType, AssetT> has key, store {}
 
+    /// Harvest ability to harvest
+    struct HarvestCapability<PoolType, AssetT> has key, store {}
+
     /// To store user's asset token
     struct Stake<PoolType, AssetT> has key, store {
         asset: AssetT,
@@ -139,7 +142,9 @@ module YieldFarming {
         account: &signer,
         broker: address,
         asset: AssetT,
-        asset_weight: u128) acquires FarmingAsset {
+        asset_weight: u128,
+        _cap: &ParameterModifyCapability<PoolType, AssetT>): HarvestCapability<PoolType, AssetT> acquires FarmingAsset {
+
         // Debug::print(account);
         let account_address = Signer::address_of(account);
         assert(!exists_stake_at_address<PoolType, AssetT>(account_address),
@@ -176,11 +181,18 @@ module YieldFarming {
             farming_asset.harvest_index = new_harvest_index;
         };
         farming_asset.last_update_timestamp = now_seconds;
+        HarvestCapability<PoolType, AssetT> {}
     }
 
     /// Unstake asset from farming pool
-    public fun unstake<PoolType: store, RewardTokenT: store, AssetT: store>(account: &signer, broker: address)
+    public fun unstake<PoolType: store, RewardTokenT: store, AssetT: store>(
+        account: &signer,
+        broker: address,
+        cap: HarvestCapability<PoolType, AssetT>)
     : (AssetT, Token::Token<RewardTokenT>) acquires Farming, FarmingAsset, Stake {
+        // Destroy capability
+        let HarvestCapability<PoolType, AssetT>{} = cap;
+
         let farming = borrow_global_mut<Farming<PoolType, RewardTokenT>>(broker);
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
 
@@ -210,12 +222,13 @@ module YieldFarming {
     public fun harvest<PoolType: store,
                        RewardTokenT: store,
                        AssetT: store>(
-        account: &signer,
+        account: address,
         broker: address,
-        amount: u128): Token::Token<RewardTokenT> acquires Farming, FarmingAsset, Stake {
+        amount: u128,
+        _cap: &HarvestCapability<PoolType, AssetT>): Token::Token<RewardTokenT> acquires Farming, FarmingAsset, Stake {
         let farming = borrow_global_mut<Farming<PoolType, RewardTokenT>>(broker);
         let farming_asset = borrow_global_mut<FarmingAsset<PoolType, AssetT>>(broker);
-        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(Signer::address_of(account));
+        let stake = borrow_global_mut<Stake<PoolType, AssetT>>(account);
 
         let now_seconds = Timestamp::now_seconds();
         let new_harvest_index = calculate_harvest_index_with_asset<PoolType, AssetT>(farming_asset, now_seconds);
@@ -265,12 +278,6 @@ module YieldFarming {
             stake.asset_weight
         );
 
-        // Write will be reject in query function
-        // stake.gain = stake.gain + new_gain;
-        // stake.last_harvest_index = new_harvest_index;
-        // farming_asset.harvest_index = new_harvest_index;
-        // farming_asset.last_update_timestamp = now_seconds;
-        // stake.gain
         stake.gain + new_gain
     }
 
