@@ -47,7 +47,7 @@ module TokenSwapScripts {
         TokenSwapRouter::swap_exact_token_for_token<X, Y>(&signer, amount_x_in, amount_y_out_min);
     }
 
-    public(script) fun swap_exact_token_for_token_router02<X: store, R: store, Y: store>(
+    public(script) fun swap_exact_token_for_token_router2<X: store, R: store, Y: store>(
         signer: signer,
         amount_x_in: u128,
         amount_y_out_min: u128,
@@ -55,7 +55,7 @@ module TokenSwapScripts {
         TokenSwapRouter2::swap_exact_token_for_token<X, R, Y>(&signer, amount_x_in, amount_y_out_min);
     }
 
-    public(script) fun swap_exact_token_for_token_router03<X: store, R: store, T: store, Y: store>(
+    public(script) fun swap_exact_token_for_token_router3<X: store, R: store, T: store, Y: store>(
         signer: signer,
         amount_x_in: u128,
         amount_y_out_min: u128,
@@ -72,7 +72,7 @@ module TokenSwapScripts {
         TokenSwapRouter::swap_token_for_exact_token<X, Y>(&signer, amount_x_in_max, amount_y_out);
     }
 
-    public fun swap_token_for_exact_token_router02<X: store, R: store, Y: store>(
+    public fun swap_token_for_exact_token_router2<X: store, R: store, Y: store>(
         signer: signer,
         amount_x_in_max: u128,
         amount_y_out: u128,
@@ -80,7 +80,7 @@ module TokenSwapScripts {
         TokenSwapRouter2::swap_token_for_exact_token<X, R, Y>(&signer, amount_x_in_max, amount_y_out);
     }
 
-    public fun swap_token_for_exact_token_router03<X: store, R: store, T: store, Y: store>(
+    public fun swap_token_for_exact_token_router3<X: store, R: store, T: store, Y: store>(
         signer: signer,
         amount_x_in_max: u128,
         amount_y_out: u128,

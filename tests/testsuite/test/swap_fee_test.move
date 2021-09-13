@@ -205,6 +205,7 @@ script {
 address alice = {{alice}};
 address feeadmin = {{feeadmin}};
 script {
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use 0x1::STC::STC;
@@ -225,7 +226,9 @@ script {
         let y_out_without_fee = TokenSwapLibrary::get_amount_out_without_fee(amount_x_in, reserve_x, reserve_y); 
         let swap_fee = y_out_without_fee - y_out;
         TokenSwapRouter::swap_exact_token_for_token<STC, ETH>(&signer, amount_x_in, amount_y_out_min);
-        TokenSwapRouter::swap_exact_token_for_token_swap_fee_setup<STC, ETH>(amount_x_in, y_out, reserve_x, reserve_y);
+        if (! TokenSwap::get_swap_fee_on()){
+          TokenSwapRouter::swap_exact_token_for_token_swap_fee_setup<STC, ETH>(amount_x_in, y_out, reserve_x, reserve_y);
+        };
 
         let (reserve_p, reserve_q) = TokenSwapRouter::get_reserves<ETH, BX_USDT>();
         let fee_out = TokenSwapLibrary::get_amount_out_without_fee(swap_fee, reserve_p, reserve_q);
@@ -250,6 +253,7 @@ script {
 address alice = {{alice}};
 address feeadmin = {{feeadmin}};
 script {
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use 0x1::STC::STC;
@@ -270,7 +274,9 @@ script {
         let x_in_without_fee = TokenSwapLibrary::get_amount_in_without_fee(amount_y_out, reserve_x, reserve_y); 
         let swap_fee = x_in - x_in_without_fee;
         TokenSwapRouter::swap_token_for_exact_token<STC, ETH>(&signer, amount_x_in_max, amount_y_out);
-        TokenSwapRouter::swap_token_for_exact_token_swap_fee_setup<STC, ETH>(x_in, amount_y_out, reserve_x, reserve_y);
+        if (! TokenSwap::get_swap_fee_on()){
+            TokenSwapRouter::swap_token_for_exact_token_swap_fee_setup<STC, ETH>(x_in, amount_y_out, reserve_x, reserve_y);
+        };
 
         let (reserve_p, reserve_q) = TokenSwapRouter::get_reserves<STC, BX_USDT>();
         let fee_out = TokenSwapLibrary::get_amount_out_without_fee(swap_fee, reserve_p, reserve_q);
@@ -296,6 +302,7 @@ script {
 address alice = {{alice}};
 address feeadmin = {{feeadmin}};
 script {
+    use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwap;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use alice::SwapTestHelper::{ETH, USDT};
@@ -314,7 +321,9 @@ script {
         let y_out_without_fee = TokenSwapLibrary::get_amount_out_without_fee(amount_x_in, reserve_x, reserve_y); 
         let swap_fee = y_out_without_fee - y_out;
         TokenSwapRouter::swap_exact_token_for_token<ETH, USDT>(&signer, amount_x_in, amount_y_out_min);
-        TokenSwapRouter::swap_exact_token_for_token_swap_fee_setup<ETH, USDT>(amount_x_in, y_out, reserve_x, reserve_y);
+        if (! TokenSwap::get_swap_fee_on()){
+            TokenSwapRouter::swap_exact_token_for_token_swap_fee_setup<ETH, USDT>(amount_x_in, y_out, reserve_x, reserve_y);
+        };
 
         let fee_balance_end = SwapTestHelper::get_safe_balance<BX_USDT>(@feeadmin);
         let fee_balance_change = fee_balance_end - fee_balance_start;
