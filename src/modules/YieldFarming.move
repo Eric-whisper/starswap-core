@@ -18,6 +18,80 @@ module YieldFarming {
     const ERR_FARMING_BALANCE_EXCEEDED: u64 = 108;
     const ERR_FARMING_NOT_ENOUGH_ASSET: u64 = 109;
     const ERR_FARMING_TIMESTAMP_INVALID: u64 = 110;
+    const ERR_FARMING_TOKEN_SCALE_OVERFLOW: u64 = 111;
+    const ERR_FARMING_CALC_LAST_IDX_BIGGER_THAN_NOW: u64 = 112;
+
+    const EXP_MAX_SCALE: u128 = 9;
+
+    //////////////////////////////////////////////////////////////////////
+    // Exponential functions
+
+    const EXP_SCALE: u128 = 1000000000000000000;// e18
+
+    struct Exp has copy, store, drop {
+        mantissa: u128
+    }
+
+    fun exp_direct(num: u128): Exp {
+        Exp {
+            mantissa: num
+        }
+    }
+
+    fun exp_direct_expand(num: u128): Exp {
+        Exp {
+            mantissa: mul_u128(num, EXP_SCALE)
+        }
+    }
+
+
+    fun mantissa(a: Exp): u128 {
+        a.mantissa
+    }
+
+    fun add_exp(a: Exp, b: Exp): Exp {
+        Exp {
+            mantissa: add_u128(a.mantissa, b.mantissa)
+        }
+    }
+
+    fun exp(num: u128, denom: u128): Exp {
+        // if overflow move will abort
+        let scaledNumerator = mul_u128(num, EXP_SCALE);
+        let rational = div_u128(scaledNumerator, denom);
+        Exp {
+            mantissa: rational
+        }
+    }
+
+    fun add_u128(a: u128, b: u128): u128 {
+        a + b
+    }
+
+    fun sub_u128(a: u128, b: u128): u128 {
+        a - b
+    }
+
+    fun mul_u128(a: u128, b: u128): u128 {
+        if (a == 0 || b == 0) {
+            return 0
+        };
+        a * b
+    }
+
+    fun div_u128(a: u128, b: u128): u128 {
+        if (b == 0) {
+            abort Errors::invalid_argument(ERR_EXP_DIVIDE_BY_ZERO)
+        };
+        if (a == 0) {
+            return 0
+        };
+        a / b
+    }
+
+    fun truncate(exp: Exp): u128 {
+        return exp.mantissa / EXP_SCALE
+    }
 
     /// The object of yield farming
     /// RewardTokenT meaning token of yield farming
@@ -35,12 +109,6 @@ module YieldFarming {
         start_time: u64,
     }
 
-    /// Capability to modify parameter such as period and release amount
-    struct ParameterModifyCapability<PoolType, AssetT> has key, store {}
-
-    /// Harvest ability to harvest
-    struct HarvestCapability<PoolType, AssetT> has key, store {}
-
     /// To store user's asset token
     struct Stake<PoolType, AssetT> has key, store {
         asset: AssetT,
@@ -49,51 +117,19 @@ module YieldFarming {
         gain: u128,
     }
 
-    //////////////////////////////////////////////////////////////////////
-    // Exponential functions
+    /// Capability to modify parameter such as period and release amount
+    struct ParameterModifyCapability<PoolType, AssetT> has key, store {}
 
-    const EXP_SCALE: u128 = 1000000000000000000;// e18
-
-    struct Exp has copy, store, drop {
-        mantissa: u128
-    }
-
-    fun exp(num: u128, denom: u128): Exp {
-        // if overflow move will abort
-        let scaledNumerator = mul_u128(num, EXP_SCALE);
-        let rational = div_u128(scaledNumerator, denom);
-        Exp {
-            mantissa: rational
-        }
-    }
-
-    fun mul_u128(a: u128, b: u128): u128 {
-        if (a == 0 || b == 0) {
-            return 0
-        };
-
-        a * b
-    }
-
-    fun div_u128(a: u128, b: u128): u128 {
-        if ( b == 0) {
-            abort Errors::invalid_argument(ERR_EXP_DIVIDE_BY_ZERO)
-        };
-        if (a == 0) {
-            return 0
-        };
-        a / b
-    }
-
-    fun truncate(exp: Exp): u128 {
-        return exp.mantissa / EXP_SCALE
-    }
+    /// Harvest ability to harvest
+    struct HarvestCapability<PoolType, AssetT> has key, store {}
 
     /// Called by token issuer
     /// this will declare a yield farming pool
     public fun initialize<
         PoolType: store,
         RewardTokenT: store>(account: &signer, treasury_token: Token::Token<RewardTokenT>) {
+        let token_scale = Token::scaling_factor<RewardTokenT>();
+        assert(token_scale <= EXP_MAX_SCALE, Errors::limit_exceeded(ERR_FARMING_TOKEN_SCALE_OVERFLOW));
         assert(!exists_at<PoolType, RewardTokenT>(
             Signer::address_of(account)),
             Errors::invalid_state(ERR_FARMING_INIT_REPEATE));
@@ -323,7 +359,8 @@ module YieldFarming {
                                                    release_per_second: u128): u128 {
         assert(last_update_timestamp <= now_seconds, Errors::invalid_argument(ERR_FARMING_TIMESTAMP_INVALID));
         let time_period = now_seconds - last_update_timestamp;
-        harvest_index + (release_per_second * ((time_period as u128)))
+        let addtion_index = release_per_second * ((time_period as u128));
+        harvest_index + mantissa(exp_direct_expand(addtion_index))
     }
 
     /// There is calculating from harvest index and global parameters
@@ -338,15 +375,16 @@ module YieldFarming {
         let time_period = now_seconds - last_update_timestamp;
         let numr = (release_per_second * (time_period as u128));
         let denom = asset_total_weight;
-        let added_index = truncate(exp(numr, denom));
-        harvest_index + added_index
+        harvest_index + mantissa(exp(numr, denom))
     }
 
     /// This function will return a gain index
     public fun calculate_withdraw_amount(harvest_index: u128,
                                          last_harvest_index: u128,
                                          asset_weight: u128): u128 {
-        asset_weight * (harvest_index - last_harvest_index)
+        assert(harvest_index > last_harvest_index, Errors::invalid_argument(ERR_FARMING_CALC_LAST_IDX_BIGGER_THAN_NOW));
+        let amount = asset_weight * (harvest_index - last_harvest_index);
+        truncate(exp_direct(amount))
     }
 
     /// Check the Farming of TokenT is exists.

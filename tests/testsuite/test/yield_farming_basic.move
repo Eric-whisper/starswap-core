@@ -93,9 +93,12 @@ script {
         assert((2000000000 * 5) == withdraw_1, 10001);
 
         // Denominator bigger than numberator
-        let index_2 = YieldFarming::calculate_harvest_index(100, 1000000000000, 0, 10, 1000000);
+        let index_2 = YieldFarming::calculate_harvest_index(0, 100000000000000, 0, 5, 10000000);
+        let amount_2 = YieldFarming::calculate_withdraw_amount(index_2, 0, 40000000000);
         Debug::print(&index_2);
+        Debug::print(&amount_2);
         assert(index_2 > 0, 1002);
+        assert(amount_2 > 0, 1002);
         //let withdraw_1 = YieldFarming::calculate_withdraw_amount(index_1, harvest_index, _asset_total_weight);
         //assert((2000000000 * 5) == withdraw_1, 10001);
     }
