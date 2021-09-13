@@ -25,6 +25,10 @@ script {
     }
 }
 
+// check: EXECUTED
+
+
+
 //! new-transaction
 //! sender: alice
 address alice = {{alice}};
@@ -71,6 +75,9 @@ script {
    }
 }
 
+// check: EXECUTED
+
+
 
 //! new-transaction
 //! sender: bob
@@ -99,3 +106,4 @@ script {
     }
 }
 
+// check: EXECUTED

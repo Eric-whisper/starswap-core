@@ -233,7 +233,7 @@ module TokenSwapRouter {
         // swap fee setup, use Y token to pay for fee
         let y_out_without_fee = TokenSwapLibrary::get_amount_out_without_fee(amount_x_in, reserve_x, reserve_y);
         let swap_fee = y_out_without_fee - y_out;
-        assert(swap_fee > 0, ERROR_ROUTER_SWAP_FEE_MUST_POSITIVE);
+        assert(swap_fee >= 0, ERROR_ROUTER_SWAP_FEE_MUST_POSITIVE);
 
         intra_swap_fee_setup<X, Y, Y, BX_USDT>(swap_fee, false);
     }
@@ -276,7 +276,7 @@ module TokenSwapRouter {
         // swap fee setup, use X token to pay for fee
         let x_in_without_fee = TokenSwapLibrary::get_amount_in_without_fee(amount_y_out, reserve_x, reserve_y);
         let swap_fee = x_in - x_in_without_fee;
-        assert(swap_fee > 0, ERROR_ROUTER_SWAP_FEE_MUST_POSITIVE);
+        assert(swap_fee >= 0, ERROR_ROUTER_SWAP_FEE_MUST_POSITIVE);
 
         intra_swap_fee_setup<X, Y, X, BX_USDT>(swap_fee, true);
     }

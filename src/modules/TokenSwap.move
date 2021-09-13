@@ -55,7 +55,7 @@ module TokenSwap {
     const ERROR_SWAP_TOKEN_NOT_EXISTS: u64 = 2008;
     const ERROR_SWAP_TOKEN_FEE_INVALID: u64 = 2009;
 
-    const SWAP_FEE_ON: bool= false;
+    const SWAP_FEE_ON: bool= true;
 
     ///
     /// Check if swap pair exists
