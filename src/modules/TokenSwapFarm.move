@@ -58,11 +58,13 @@ module TokenSwapFarm {
         unstake_event_handler: Event::EventHandle<UnstakeEvent>,
     }
 
-    struct FarmParameterModfiyCapability<TokenX, TokenY> has key, store {
-        cap: YieldFarming::ParameterModifyCapability<
-            PoolTypeLiquidityMint,
-            Token::Token<LiquidityToken<TokenX, TokenY>>>,
+    struct FarmCapability<TokenX, TokenY> has key, store {
+        cap: YieldFarming::ParameterModifyCapability<PoolTypeLiquidityMint, Token::Token<LiquidityToken<TokenX, TokenY>>>,
         release_per_seconds: u128,
+    }
+
+    struct FarmHarvestCapability<TokenX, TokenY> has key, store {
+        cap: YieldFarming::HarvestCapability<PoolTypeLiquidityMint, Token::Token<LiquidityToken<TokenX, TokenY>>>,
     }
 
     /// Initialize farm big pool
@@ -91,14 +93,12 @@ module TokenSwapFarm {
             Token::Token<LiquidityToken<TokenX, TokenY>>
         >(account, release_per_seconds, 0);
 
-        move_to(account, FarmParameterModfiyCapability<TokenX, TokenY> {
-            cap,
-            release_per_seconds,
-        });
-//        // TODO (BobOng): Add to DAO
-//        GovernanceDaoProposal::plugin<
-//            PoolTypeProposal<TokenX, TokenY, GovTokenT>,
-//            GovTokenT>(account, modify_cap);
+        move_to(account, FarmCapability<TokenX, TokenY> { cap, release_per_seconds });
+
+        //// TODO (BobOng): Add to DAO
+        //GovernanceDaoProposal::plugin<
+        //    PoolTypeProposal<TokenX, TokenY, GovTokenT>,
+        //    GovTokenT>(account, modify_cap);
 
         // Emit add farm event
         let admin = Signer::address_of(account);
@@ -113,15 +113,22 @@ module TokenSwapFarm {
     }
 
     /// Stake liquidity Token pair
-    public fun stake<TokenX: store, TokenY: store>(account: &signer, amount: u128) acquires FarmPoolEvent {
+    public fun stake<TokenX: store, TokenY: store>(account: &signer, amount: u128) acquires FarmPoolEvent, FarmCapability {
         let lp_token = TokenSwapRouter::withdraw_liquidity_token<TokenX, TokenY>(account, amount);
-        YieldFarming::stake<
+        let cap = borrow_global_mut<FarmCapability<TokenX, TokenY>>(TBD::token_address());
+        let harvest_cap = YieldFarming::stake<
             PoolTypeLiquidityMint,
             TBD::TBD,
-            Token::Token<LiquidityToken<TokenX, TokenY>>
-        >(
-            account, TBD::token_address(), lp_token, amount
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(
+            account,
+            TBD::token_address(),
+            lp_token,
+            amount,
+            &cap.cap
         );
+
+        // Store a capability to
+        move_to(account, FarmHarvestCapability<TokenX, TokenY> { cap: harvest_cap });
 
         // Emit stake event
         let farm_stake_event = borrow_global_mut<FarmPoolEvent>(TBD::token_address());
@@ -137,14 +144,17 @@ module TokenSwapFarm {
 
     /// Unstake liquidity Token pair
     public fun unstake<TokenX: store,
-                       TokenY: store>(account: &signer) acquires FarmPoolEvent {
+                       TokenY: store>(account: &signer) acquires FarmPoolEvent, FarmHarvestCapability {
+        let account_addr = Signer::address_of(account);
+        let FarmHarvestCapability<TokenX, TokenY> { cap } =
+            move_from<FarmHarvestCapability<TokenX, TokenY>>(account_addr);
+
         let (liquidity_token, reward_token) = YieldFarming::unstake<
             PoolTypeLiquidityMint,
             TBD::TBD,
             Token::Token<LiquidityToken<TokenX, TokenY>>
-        >(account, TBD::token_address());
+        >(account, TBD::token_address(), cap);
 
-        let account_addr = Signer::address_of(account);
         let admin = TBD::token_address();
 
         TokenSwapRouter::deposit_liquidity_token<TokenX, TokenY>(account_addr, liquidity_token);
@@ -163,14 +173,20 @@ module TokenSwapFarm {
 
     /// Harvest reward from token pool
     public fun harvest<TokenX: store,
-                       TokenY: store>(account: &signer, amount: u128) {
+                       TokenY: store>(account: &signer, amount: u128) acquires FarmHarvestCapability {
+        let account_addr = Signer::address_of(account);
+        let farm_harvest_cap = borrow_global_mut<FarmHarvestCapability<TokenX, TokenY>>(account_addr);
+
         let token = YieldFarming::harvest<
             PoolTypeLiquidityMint,
             TBD::TBD,
-            Token::Token<LiquidityToken<TokenX, TokenY>>
-        >(account, TBD::token_address(), amount);
+            Token::Token<LiquidityToken<TokenX, TokenY>>>(
+            account_addr,
+            TBD::token_address(),
+            amount,
+            &farm_harvest_cap.cap,
+        );
 
-        let account_addr = Signer::address_of(account);
         if (!Account::is_accept_token<TBD::TBD>(account_addr)) {
             Account::do_accept_token<TBD::TBD>(account);
         };
@@ -203,8 +219,8 @@ module TokenSwapFarm {
     }
 
     /// Query release per second
-    public fun query_release_per_second<TokenX: store, TokenY: store>(): u128 acquires FarmParameterModfiyCapability {
-        let cap = borrow_global<FarmParameterModfiyCapability<TokenX, TokenY>>(TBD::token_address());
+    public fun query_release_per_second<TokenX: store, TokenY: store>(): u128 acquires FarmCapability {
+        let cap = borrow_global<FarmCapability<TokenX, TokenY>>(TBD::token_address());
         cap.release_per_seconds
     }
 
@@ -213,6 +229,5 @@ module TokenSwapFarm {
         // TODO(bobong): calculate APY
         0
     }
-
 }
 }
