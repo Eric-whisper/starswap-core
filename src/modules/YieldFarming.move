@@ -7,6 +7,7 @@ module YieldFarming {
     use 0x1::Signer;
     use 0x1::Timestamp;
     use 0x1::Errors;
+    use 0x1::Math;
 
     const ERR_FARMING_INIT_REPEATE: u64 = 101;
     const ERR_FARMING_NOT_STILL_FREEZE: u64 = 102;
@@ -128,8 +129,9 @@ module YieldFarming {
     public fun initialize<
         PoolType: store,
         RewardTokenT: store>(account: &signer, treasury_token: Token::Token<RewardTokenT>) {
+        let scaling_factor = Math::pow(10, (EXP_MAX_SCALE as u64));
         let token_scale = Token::scaling_factor<RewardTokenT>();
-        assert(token_scale <= EXP_MAX_SCALE, Errors::limit_exceeded(ERR_FARMING_TOKEN_SCALE_OVERFLOW));
+        assert(token_scale <= scaling_factor, Errors::limit_exceeded(ERR_FARMING_TOKEN_SCALE_OVERFLOW));
         assert(!exists_at<PoolType, RewardTokenT>(
             Signer::address_of(account)),
             Errors::invalid_state(ERR_FARMING_INIT_REPEATE));
@@ -382,7 +384,7 @@ module YieldFarming {
     public fun calculate_withdraw_amount(harvest_index: u128,
                                          last_harvest_index: u128,
                                          asset_weight: u128): u128 {
-        assert(harvest_index > last_harvest_index, Errors::invalid_argument(ERR_FARMING_CALC_LAST_IDX_BIGGER_THAN_NOW));
+        assert(harvest_index >= last_harvest_index, Errors::invalid_argument(ERR_FARMING_CALC_LAST_IDX_BIGGER_THAN_NOW));
         let amount = asset_weight * (harvest_index - last_harvest_index);
         truncate(exp_direct(amount))
     }

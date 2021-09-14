@@ -90,7 +90,7 @@ script {
             last_update_timestamp,
             Timestamp::now_seconds(), 2000000000);
         let withdraw_1 = YieldFarming::calculate_withdraw_amount(index_1, harvest_index, _asset_total_weight);
-        assert((2000000000 * 5) == withdraw_1, 10001);
+        assert((2000000000 * 5) == withdraw_1, 1001);
 
         // Denominator bigger than numberator
         let index_2 = YieldFarming::calculate_harvest_index(0, 100000000000000, 0, 5, 10000000);
@@ -176,6 +176,7 @@ script {
 }
 // check: EXECUTED
 
+
 //! block-prologue
 //! author: genesis
 //! block-number: 2
@@ -251,4 +252,3 @@ script {
     }
 }
 // check: EXECUTED
-

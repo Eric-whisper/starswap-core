@@ -44,9 +44,10 @@ module TokenSwapRouter2 {
         TokenSwapRouter::swap_exact_token_for_token<R, Y>(signer, r_out, amount_y_out_min);
     }
 
-    public fun swap_token_for_exact_token<X: store, R: store, Y: store>(signer: &signer,
-                  amount_x_in_max: u128,
-                  amount_y_out: u128) {
+    public fun swap_token_for_exact_token<X: store, R: store, Y: store>(
+        signer: &signer,
+        amount_x_in_max: u128,
+        amount_y_out: u128) {
         // calculate actual x in
         let (r_in, x_in) = get_amount_in<X, R, Y>(amount_y_out);
         assert(x_in <= amount_x_in_max, ERROR_ROUTER_X_IN_OVER_LIMIT_MAX);
