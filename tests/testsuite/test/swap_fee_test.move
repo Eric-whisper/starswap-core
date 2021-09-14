@@ -1,5 +1,5 @@
 //! account: admin, 0x598b8cbfd4536ecbe88aa1cfaffa7a62, 200000 0x1::STC::STC
-//! account: tokenholder, 0x49156896A605F092ba1862C50a9036c9, 400000 0x1::STC::STC
+//! account: feetokenholder, 0x9350502a3af6c617e9a42fa9e306a385, 400000 0x1::STC::STC
 //! account: feeadmin, 0xd231d9da8e37fc3d9ff3f576cf978535
 //! account: exchanger, 100000 0x1::STC::STC
 //! account: alice, 500000 0x1::STC::STC
@@ -62,14 +62,21 @@ script {
 
 
 //! new-transaction
-//! sender: tokenholder
+//! sender: feetokenholder
 address alice = {{alice}};
 script {
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
+    use 0x1::Token;
+    use 0x1::Account;
 
     fun fee_token_init(signer: signer) {
-        BX_USDT::init(&signer);
-        BX_USDT::mint(&signer, 500000u128);
+        // BX_USDT::init(&signer);
+        // BX_USDT::mint(&signer, 500000u128);
+
+        Token::register_token<BX_USDT>(&signer, 9);
+        Account::do_accept_token<BX_USDT>(&signer);
+        let token = Token::mint<BX_USDT>(&signer, 500000u128);
+        Account::deposit_to_self(&signer, token);
     }
 }
 
@@ -95,7 +102,7 @@ script {
 address alice = {{alice}};
 script {
     use 0x1::Account;
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     fun accept_token(signer: signer) {
         Account::do_accept_token<BX_USDT>(&signer);
@@ -109,7 +116,7 @@ script {
 address alice = {{alice}};
 script {
     use 0x1::Account;
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     fun accept_token(signer: signer) {
         Account::do_accept_token<BX_USDT>(&signer);
@@ -135,12 +142,12 @@ script {
 
 
 //! new-transaction
-//! sender: tokenholder
+//! sender: feetokenholder
 address alice = {{alice}};
 address exchanger = {{exchanger}};
 script {
     use alice::SwapTestHelper;
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     fun transfer(signer: signer) {
         SwapTestHelper::safe_transfer<BX_USDT>(&signer, @alice, 300000u128);
@@ -157,7 +164,7 @@ script {
     use alice::SwapTestHelper::{ETH, USDT};
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC::STC;
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     fun register_token_pair(signer: signer) {
         //token pair register must be swap admin account
@@ -185,7 +192,7 @@ script {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x1::STC::STC;
     use alice::SwapTestHelper::{ETH, USDT};
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     fun add_liquidity(signer: signer) {
         // for the first add liquidity
@@ -210,7 +217,7 @@ script {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use 0x1::STC::STC;
     use alice::SwapTestHelper::{ETH};
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     use alice::SwapTestHelper;
     use 0x1::Debug;
@@ -258,7 +265,7 @@ script {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use 0x1::STC::STC;
     use alice::SwapTestHelper::{ETH};
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     use alice::SwapTestHelper;
     use 0x1::Debug;
@@ -306,7 +313,7 @@ script {
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapRouter;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
     use alice::SwapTestHelper::{ETH, USDT};
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     use alice::SwapTestHelper;
     use 0x1::Debug;
