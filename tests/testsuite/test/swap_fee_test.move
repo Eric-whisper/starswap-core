@@ -66,15 +66,17 @@ script {
 address alice = {{alice}};
 script {
     use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
+    use 0x1::Token;
+    use 0x1::Account;
 
     fun fee_token_init(signer: signer) {
         // BX_USDT::init(&signer);
         // BX_USDT::mint(&signer, 500000u128);
 
-        Token::register_token<BX_USDT>(signer, 9);
-        Account::do_accept_token<BX_USDT>(signer);
-        let token = Token::mint<BX_USDT>(signer, 500000u128);
-        Account::deposit_to_self(signer, token);
+        Token::register_token<BX_USDT>(&signer, 9);
+        Account::do_accept_token<BX_USDT>(&signer);
+        let token = Token::mint<BX_USDT>(&signer, 500000u128);
+        Account::deposit_to_self(&signer, token);
     }
 }
 
