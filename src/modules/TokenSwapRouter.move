@@ -8,7 +8,7 @@ module TokenSwapRouter {
     use 0x1::Signer;
     use 0x1::Token;
     use 0x598b8cbfd4536ecbe88aa1cfaffa7a62::TokenSwapLibrary;
-    use 0x49156896A605F092ba1862C50a9036c9::BX_USDT::BX_USDT;
+    use 0x9350502a3af6c617e9a42fa9e306a385::BX_USDT::BX_USDT;
 
     // use 0x1::Debug;
     const ERROR_ROUTER_PARAMETER_INVALID: u64 = 1001;
